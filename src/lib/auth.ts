@@ -1,6 +1,26 @@
 import { SignJWT, jwtVerify } from "jose";
 import { cookies } from "next/headers";
+import crypto from "crypto";
 import { prisma } from "./db";
+
+/**
+ * Perform constant-time string comparison to defend against timing attacks.
+ */
+export function constantTimeCompare(a: string, b: string): boolean {
+  try {
+    const aBuf = Buffer.from(a, "utf-8");
+    const bBuf = Buffer.from(b, "utf-8");
+    if (aBuf.length !== bBuf.length) {
+      // Dummy check with self to balance execution time
+      crypto.timingSafeEqual(aBuf, aBuf);
+      return false;
+    }
+    return crypto.timingSafeEqual(aBuf, bBuf);
+  } catch {
+    return false;
+  }
+}
+
 
 const JWT_SECRET = new TextEncoder().encode(
   process.env.JWT_SECRET || "smart-ticket-waitlist-demo-secret-key-32chars-min!"

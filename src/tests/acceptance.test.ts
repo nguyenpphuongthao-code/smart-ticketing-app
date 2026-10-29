@@ -38,9 +38,14 @@ describe("ACCEPTANCE TEST (End-to-End Workflow Verification)", () => {
     expect(khach1User).toBeDefined();
     expect(nhanvienUser).toBeDefined();
     expect(tripA1_04).toBeDefined();
+
+    // Ensure database clean state for YC-009
+    await prisma.waitRequest.deleteMany({ where: { code: "YC-009" } });
   });
 
   afterAll(async () => {
+    await prisma.waitRequest.deleteMany({ where: { code: "YC-009" } });
+    await prisma.notification.deleteMany({ where: { message: { contains: "YC-009" } } });
     await prisma.$disconnect();
   });
 

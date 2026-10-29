@@ -1,0 +1,41 @@
+[
+  {
+    "email": "nhanvien@chovethongminh.vn",
+    "name": "Nguyễn Quản Trị (Nhân viên điều hành)",
+    "role": "STAFF",
+    "createdAt": "2026-10-29T10:00:00.000Z"
+  },
+  {
+    "email": "hanhkhach@chovethongminh.vn",
+    "name": "Trần Hành Khách",
+    "role": "PASSENGER",
+    "createdAt": "2026-10-29T10:00:00.000Z"
+  },
+  {
+    "email": "test_passenger_new@demo.local",
+    "name": "Khách Hàng Mới",
+    "role": "PASSENGER",
+    "createdAt": "2026-10-29T17:36:24.672Z",
+    "lastLoginAt": "2026-10-29T17:38:33.731Z"
+  },
+  {
+    "email": "test_staff_new@demo.local",
+    "name": "Nhân Viên Điều Hành Mới",
+    "role": "STAFF",
+    "createdAt": "2026-10-29T17:36:24.778Z",
+    "lastLoginAt": "2026-10-29T17:38:33.834Z"
+  },
+  {
+    "email": "nguyenny@gmail.com",
+    "name": "Nguyễn Ny",
+    "role": "PASSENGER",
+    "createdAt": "2026-10-29T17:50:33.732Z",
+    "lastLoginAt": "2026-10-29T17:51:36.937Z"
+  },
+  {
+    "email": "phuongthao@gmail.com",
+    "name": "Nguyen Phung Phuong Thao",
+    "role": "STAFF",
+    "createdAt": "2026-10-29T18:22:00.981Z"
+  }
+]

@@ -12,12 +12,15 @@ import {
   Train,
 } from "lucide-react";
 import { prisma } from "@/lib/db";
+import { requireStaff } from "@/lib/auth";
 import { REQUEST_STATUS } from "@/lib/constants";
 import { formatDateVN, formatDateTimeVN, getStatusBadgeClasses } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
 export default async function QuanTriTongQuanPage() {
+  await requireStaff();
+
   // Query 4 cards
   const pendingRequests = await prisma.waitRequest.findMany({
     where: { status: REQUEST_STATUS.PENDING },
@@ -64,11 +67,10 @@ export default async function QuanTriTongQuanPage() {
       }
     }
     if (maxItem) {
-      topTripRecommendation = `Chuyến ${maxItem.trip.code} (${maxItem.trip.origin} – ${
-        maxItem.trip.destination
-      }) ngày ${formatDateVN(
-        maxItem.trip.departureDate
-      )} có nhu cầu chờ cao nhất (${maxItem.tickets} vé). Số người chờ không đồng nghĩa với số vé chắc chắn bán được; cần xem xét điều kiện kỹ thuật, lịch chạy tàu và chi phí trước khi quyết định.`;
+      topTripRecommendation = `Chuyến ${maxItem.trip.code} (${maxItem.trip.origin} – ${maxItem.trip.destination
+        }) ngày ${formatDateVN(
+          maxItem.trip.departureDate
+        )} có nhu cầu chờ cao nhất (${maxItem.tickets} vé). Số người chờ không đồng nghĩa với số vé chắc chắn bán được; cần xem xét điều kiện kỹ thuật, lịch chạy tàu và chi phí trước khi quyết định.`;
     }
   }
 

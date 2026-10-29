@@ -13,6 +13,12 @@ import {
   Sparkles,
   ArrowRight,
   ShieldCheck,
+  Search,
+  Filter,
+  Calendar,
+  MapPin,
+  Layers,
+  X,
 } from "lucide-react";
 import { SEAT_CLASSES, REQUEST_STATUS } from "@/lib/constants";
 import { formatDateVN } from "@/lib/utils";
@@ -68,6 +74,68 @@ export function TripInventoryManagerView({ trips, pendingRequests }: Props) {
     sold: number;
   } | null>(null);
   const [editLoading, setEditLoading] = useState(false);
+
+  // Filter states for trips list
+  const [searchKeyword, setSearchKeyword] = useState("");
+  const [filterDate, setFilterDate] = useState("");
+  const [filterTripCode, setFilterTripCode] = useState("");
+  const [filterOrigin, setFilterOrigin] = useState("");
+  const [filterDestination, setFilterDestination] = useState("");
+  const [filterSeatStatus, setFilterSeatStatus] = useState<"ALL" | "AVAILABLE" | "SOLD_OUT">("ALL");
+
+  // Options extracted from trips
+  const uniqueTripCodes = Array.from(new Set(trips.map((t) => t.code))).sort();
+  const uniqueDates = Array.from(new Set(trips.map((t) => t.departureDate))).sort();
+  const uniqueOrigins = Array.from(new Set(trips.map((t) => t.origin))).sort();
+  const uniqueDestinations = Array.from(new Set(trips.map((t) => t.destination))).sort();
+
+  const isFiltering =
+    Boolean(searchKeyword.trim()) ||
+    Boolean(filterDate) ||
+    Boolean(filterTripCode) ||
+    Boolean(filterOrigin) ||
+    Boolean(filterDestination) ||
+    filterSeatStatus !== "ALL";
+
+  const clearFilters = () => {
+    setSearchKeyword("");
+    setFilterDate("");
+    setFilterTripCode("");
+    setFilterOrigin("");
+    setFilterDestination("");
+    setFilterSeatStatus("ALL");
+  };
+
+  const filteredTrips = trips.filter((trip) => {
+    if (searchKeyword.trim()) {
+      const q = searchKeyword.trim().toLowerCase();
+      const match =
+        trip.code.toLowerCase().includes(q) ||
+        trip.origin.toLowerCase().includes(q) ||
+        trip.destination.toLowerCase().includes(q);
+      if (!match) return false;
+    }
+    if (filterDate && trip.departureDate !== filterDate) {
+      return false;
+    }
+    if (filterTripCode && trip.code !== filterTripCode) {
+      return false;
+    }
+    if (filterOrigin && trip.origin !== filterOrigin) {
+      return false;
+    }
+    if (filterDestination && trip.destination !== filterDestination) {
+      return false;
+    }
+    if (filterSeatStatus === "SOLD_OUT") {
+      const hasAvailable = trip.inventories.some((inv) => inv.capacity - inv.sold > 0);
+      if (hasAvailable) return false;
+    } else if (filterSeatStatus === "AVAILABLE") {
+      const hasAvailable = trip.inventories.some((inv) => inv.capacity - inv.sold > 0);
+      if (!hasAvailable) return false;
+    }
+    return true;
+  });
 
   // Handle Return Ticket
   async function handleRecordReturn(e: React.FormEvent) {
@@ -319,88 +387,268 @@ export function TripInventoryManagerView({ trips, pendingRequests }: Props) {
       )}
 
       {/* SECTION: Danh sách chuyến tàu & Kho chỗ */}
-      <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 space-y-4">
-        <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-          <Train className="w-5 h-5 text-indigo-600" />
-          Danh sách chuyến tàu & Kiểm soát tồn chỗ (Seat Inventory)
-        </h3>
+      <div className="bg-white border border-slate-200 rounded-2xl shadow-sm p-6 space-y-5">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
+          <div className="flex items-center gap-2">
+            <Train className="w-5 h-5 text-indigo-600" />
+            <h3 className="text-base font-bold text-slate-900">
+              Danh sách chuyến tàu & Kiểm soát tồn chỗ (Seat Inventory)
+            </h3>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-semibold px-2.5 py-1 bg-slate-100 text-slate-700 rounded-lg">
+              {filteredTrips.length}/{trips.length} chuyến
+            </span>
+            {isFiltering && (
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="text-xs text-rose-600 hover:text-rose-700 font-semibold flex items-center gap-1 px-2 py-1 rounded hover:bg-rose-50 transition"
+              >
+                <X className="w-3.5 h-3.5" />
+                Xóa lọc
+              </button>
+            )}
+          </div>
+        </div>
 
-        <div className="space-y-6">
-          {trips.map((trip) => (
-            <div
-              key={trip.id}
-              className="border border-slate-200 rounded-xl overflow-hidden"
-            >
-              <div className="bg-slate-50 px-4 py-3 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <div className="flex items-center gap-2">
-                  <span className="font-extrabold text-blue-700 bg-blue-100/70 px-2.5 py-0.5 rounded text-xs">
-                    Tàu {trip.code}
-                  </span>
-                  <span className="font-bold text-sm text-slate-900">
-                    {trip.origin} → {trip.destination}
-                  </span>
-                </div>
-                <div className="text-xs text-slate-500">
-                  Khởi hành: <strong>{formatDateVN(trip.departureDate)}</strong> lúc{" "}
-                  <strong>{trip.departureTime}</strong>
-                </div>
-              </div>
+        {/* BỘ LỌC TÌM KIẾM CHUYẾN TÀU */}
+        <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl space-y-3">
+          <div className="flex items-center gap-2 text-xs font-bold text-slate-700 uppercase tracking-wider">
+            <Filter className="w-3.5 h-3.5 text-indigo-600" />
+            <span>Bộ lọc tra cứu chuyến</span>
+          </div>
 
-              <div className="p-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
-                {trip.inventories.map((inv) => {
-                  const available = inv.capacity - inv.sold;
-                  const isSoldOut = available <= 0;
-
-                  return (
-                    <div
-                      key={inv.id}
-                      className={`p-3 rounded-lg border text-xs flex flex-col justify-between ${
-                        isSoldOut ? "bg-rose-50/40 border-rose-200" : "bg-white border-slate-200"
-                      }`}
-                    >
-                      <div>
-                        <div className="flex items-center justify-between font-bold text-slate-900 mb-1">
-                          <span>{inv.seatClass}</span>
-                          <button
-                            type="button"
-                            onClick={() =>
-                              setEditingInv({
-                                id: inv.id,
-                                tripCode: trip.code,
-                                seatClass: inv.seatClass,
-                                capacity: inv.capacity,
-                                sold: inv.sold,
-                              })
-                            }
-                            className="p-1 text-slate-400 hover:text-indigo-600 rounded"
-                            title="Sửa sức chứa & vé bán"
-                          >
-                            <Edit2 className="w-3.5 h-3.5" />
-                          </button>
-                        </div>
-                        <div className="text-[11px] text-slate-500">
-                          Đã bán: <strong>{inv.sold}</strong> / Sức chứa: <strong>{inv.capacity}</strong>
-                        </div>
-                      </div>
-
-                      <div className="pt-2 mt-2 border-t border-slate-100 flex items-center justify-between">
-                        <span className="text-[11px] text-slate-500">Còn lại:</span>
-                        {isSoldOut ? (
-                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-700">
-                            Hết vé (0 chỗ)
-                          </span>
-                        ) : (
-                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-700">
-                            Còn {available} chỗ
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-3">
+            {/* Từ khóa */}
+            <div className="lg:col-span-2">
+              <label className="block text-[11px] font-semibold text-slate-600 mb-1">
+                Tìm theo mã tàu / ga
+              </label>
+              <div className="relative">
+                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
+                <input
+                  type="text"
+                  value={searchKeyword}
+                  onChange={(e) => setSearchKeyword(e.target.value)}
+                  placeholder="Nhập SE1, Hà Nội, Đà Nẵng..."
+                  className="w-full pl-8 pr-3 py-1.5 text-xs bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+                />
               </div>
             </div>
-          ))}
+
+            {/* Ngày khởi hành */}
+            <div>
+              <label className="block text-[11px] font-semibold text-slate-600 mb-1 flex items-center gap-1">
+                <Calendar className="w-3 h-3 text-slate-400" />
+                Ngày khởi hành
+              </label>
+              <select
+                value={filterDate}
+                onChange={(e) => setFilterDate(e.target.value)}
+                className="w-full px-2.5 py-1.5 text-xs bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+              >
+                <option value="">Tất cả ngày</option>
+                {uniqueDates.map((date) => (
+                  <option key={date} value={date}>
+                    {formatDateVN(date)}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Chuyến tàu */}
+            <div>
+              <label className="block text-[11px] font-semibold text-slate-600 mb-1 flex items-center gap-1">
+                <Train className="w-3 h-3 text-slate-400" />
+                Chuyến tàu
+              </label>
+              <select
+                value={filterTripCode}
+                onChange={(e) => setFilterTripCode(e.target.value)}
+                className="w-full px-2.5 py-1.5 text-xs bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+              >
+                <option value="">Tất cả chuyến</option>
+                {uniqueTripCodes.map((code) => (
+                  <option key={code} value={code}>
+                    Tàu {code}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Ga đi */}
+            <div>
+              <label className="block text-[11px] font-semibold text-slate-600 mb-1 flex items-center gap-1">
+                <MapPin className="w-3 h-3 text-slate-400" />
+                Ga đi
+              </label>
+              <select
+                value={filterOrigin}
+                onChange={(e) => setFilterOrigin(e.target.value)}
+                className="w-full px-2.5 py-1.5 text-xs bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+              >
+                <option value="">Tất cả ga đi</option>
+                {uniqueOrigins.map((origin) => (
+                  <option key={origin} value={origin}>
+                    {origin}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Ga đến */}
+            <div>
+              <label className="block text-[11px] font-semibold text-slate-600 mb-1 flex items-center gap-1">
+                <MapPin className="w-3 h-3 text-slate-400" />
+                Ga đến
+              </label>
+              <select
+                value={filterDestination}
+                onChange={(e) => setFilterDestination(e.target.value)}
+                className="w-full px-2.5 py-1.5 text-xs bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:outline-none"
+              >
+                <option value="">Tất cả ga đến</option>
+                {uniqueDestinations.map((dest) => (
+                  <option key={dest} value={dest}>
+                    {dest}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 pt-1 border-t border-slate-200/60">
+            <span className="text-[11px] text-slate-500 font-medium">Tình trạng chỗ:</span>
+            <div className="inline-flex rounded-lg p-0.5 bg-slate-200/70 text-xs">
+              <button
+                type="button"
+                onClick={() => setFilterSeatStatus("ALL")}
+                className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition ${filterSeatStatus === "ALL"
+                    ? "bg-white text-indigo-700 shadow-sm"
+                    : "text-slate-600 hover:text-slate-900"
+                  }`}
+              >
+                Tất cả
+              </button>
+              <button
+                type="button"
+                onClick={() => setFilterSeatStatus("AVAILABLE")}
+                className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition ${filterSeatStatus === "AVAILABLE"
+                    ? "bg-white text-emerald-700 shadow-sm"
+                    : "text-slate-600 hover:text-slate-900"
+                  }`}
+              >
+                Còn vé
+              </button>
+              <button
+                type="button"
+                onClick={() => setFilterSeatStatus("SOLD_OUT")}
+                className={`px-2.5 py-1 rounded-md text-[11px] font-semibold transition ${filterSeatStatus === "SOLD_OUT"
+                    ? "bg-white text-rose-700 shadow-sm"
+                    : "text-slate-600 hover:text-slate-900"
+                  }`}
+              >
+                Đã hết vé
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* DANH SÁCH CÁC CHUYẾN TÀU */}
+        <div className="space-y-6">
+          {filteredTrips.length === 0 ? (
+            <div className="p-8 text-center bg-slate-50 border border-dashed border-slate-300 rounded-xl space-y-2">
+              <Filter className="w-8 h-8 text-slate-400 mx-auto" />
+              <p className="text-sm font-semibold text-slate-700">
+                Không tìm thấy chuyến tàu nào phù hợp với bộ lọc hiện tại.
+              </p>
+              <p className="text-xs text-slate-500">
+                Vui lòng thử thay đổi điều kiện lọc (ngày đi, mã tàu, ga đi/đến hoặc tình trạng vé).
+              </p>
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="mt-2 px-3 py-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded-lg text-xs font-semibold"
+              >
+                Xóa toàn bộ bộ lọc
+              </button>
+            </div>
+          ) : (
+            filteredTrips.map((trip) => (
+              <div
+                key={trip.id}
+                className="border border-slate-200 rounded-xl overflow-hidden"
+              >
+                <div className="bg-slate-50 px-4 py-3 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <span className="font-extrabold text-blue-700 bg-blue-100/70 px-2.5 py-0.5 rounded text-xs">
+                      Tàu {trip.code}
+                    </span>
+                    <span className="font-bold text-sm text-slate-900">
+                      {trip.origin} → {trip.destination}
+                    </span>
+                  </div>
+                  <div className="text-xs text-slate-500">
+                    Khởi hành: <strong>{formatDateVN(trip.departureDate)}</strong> lúc{" "}
+                    <strong>{trip.departureTime}</strong>
+                  </div>
+                </div>
+
+                <div className="p-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  {trip.inventories.map((inv) => {
+                    const available = inv.capacity - inv.sold;
+                    const isSoldOut = available <= 0;
+
+                    return (
+                      <div
+                        key={inv.id}
+                        className={`p-3 rounded-lg border text-xs flex flex-col justify-between ${isSoldOut ? "bg-rose-50/40 border-rose-200" : "bg-white border-slate-200"
+                          }`}
+                      >
+                        <div>
+                          <div className="flex items-center justify-between font-bold text-slate-900 mb-1">
+                            <span>{inv.seatClass}</span>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setEditingInv({
+                                  id: inv.id,
+                                  tripCode: trip.code,
+                                  seatClass: inv.seatClass,
+                                  capacity: inv.capacity,
+                                  sold: inv.sold,
+                                })
+                              }
+                              className="p-1 text-slate-400 hover:text-indigo-600 rounded"
+                              title="Sửa sức chứa & vé bán"
+                            >
+                              <Edit2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                          <div className="text-[11px] text-slate-500">
+                            Đã bán: <strong>{inv.sold}</strong> / Sức chứa: <strong>{inv.capacity}</strong>
+                          </div>
+                        </div>
+
+                        <div className="pt-2 mt-2 border-t border-slate-100 flex items-center justify-between">
+                          <span className="text-[11px] text-slate-500">Còn lại:</span>
+                          {isSoldOut ? (
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-rose-100 text-rose-700">
+                              Hết vé (0 chỗ)
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-700">
+                              Còn {available} chỗ
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )))}
         </div>
       </div>
 

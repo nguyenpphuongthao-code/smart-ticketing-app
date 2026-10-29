@@ -51,76 +51,85 @@ export function Navbar({ user, unreadCount = 0 }: NavbarProps) {
 
           {/* Desktop Navigation Links */}
           <nav className="hidden md:flex items-center gap-1">
-            <Link
-              href="/"
-              className={`px-3 py-2 rounded-md text-sm font-medium ${
-                isActive("/") && pathname === "/"
-                  ? "text-blue-600 bg-blue-50"
-                  : "text-slate-700 hover:text-blue-600 hover:bg-slate-50"
-              }`}
-            >
-              Trang chủ
-            </Link>
-            <Link
-              href="/tim-chuyen"
-              className={`px-3 py-2 rounded-md text-sm font-medium ${
-                isActive("/tim-chuyen")
-                  ? "text-blue-600 bg-blue-50"
-                  : "text-slate-700 hover:text-blue-600 hover:bg-slate-50"
-              }`}
-            >
-              Tìm chuyến
-            </Link>
-            <Link
-              href="/gioi-thieu"
-              className={`px-3 py-2 rounded-md text-sm font-medium ${
-                isActive("/gioi-thieu")
-                  ? "text-blue-600 bg-blue-50"
-                  : "text-slate-700 hover:text-blue-600 hover:bg-slate-50"
-              }`}
-            >
-              Giới thiệu
-            </Link>
-
-            {user && (
+            {user?.role === "STAFF" ? (
+              // Staff only sees 2 tabs: Giới thiệu & Quản trị
               <>
                 <Link
-                  href="/cho-ve/moi"
-                  className={`px-3 py-2 rounded-md text-sm font-medium flex items-center gap-1.5 ${
-                    isActive("/cho-ve/moi")
-                      ? "text-blue-600 bg-blue-50"
-                      : "text-slate-700 hover:text-blue-600 hover:bg-slate-50"
-                  }`}
+                  href="/gioi-thieu"
+                  className={`px-3 py-2 rounded-md text-sm font-medium ${isActive("/gioi-thieu")
+                      ? "text-indigo-600 bg-indigo-50 font-bold"
+                      : "text-slate-700 hover:text-indigo-600 hover:bg-slate-50"
+                    }`}
                 >
-                  <PlusCircle className="w-4 h-4 text-blue-600" />
-                  Đăng ký chờ
+                  Giới thiệu
                 </Link>
                 <Link
-                  href="/yeu-cau"
-                  className={`px-3 py-2 rounded-md text-sm font-medium flex items-center gap-1.5 ${
-                    isActive("/yeu-cau")
-                      ? "text-blue-600 bg-blue-50"
-                      : "text-slate-700 hover:text-blue-600 hover:bg-slate-50"
-                  }`}
+                  href="/quan-tri"
+                  className={`px-3 py-2 rounded-md text-sm font-medium flex items-center gap-1.5 ${isActive("/quan-tri")
+                      ? "text-indigo-600 bg-indigo-50 font-bold"
+                      : "text-indigo-600 hover:bg-indigo-50"
+                    }`}
                 >
-                  <ClipboardList className="w-4 h-4" />
-                  Yêu cầu của tôi
+                  <ShieldAlert className="w-4 h-4 text-indigo-600" />
+                  Quản trị
                 </Link>
               </>
-            )}
+            ) : (
+              // Guest or Passenger sees full links
+              <>
+                <Link
+                  href="/"
+                  className={`px-3 py-2 rounded-md text-sm font-medium ${isActive("/") && pathname === "/"
+                      ? "text-blue-600 bg-blue-50 font-semibold"
+                      : "text-slate-700 hover:text-blue-600 hover:bg-slate-50"
+                    }`}
+                >
+                  Trang chủ
+                </Link>
+                <Link
+                  href="/tim-chuyen"
+                  className={`px-3 py-2 rounded-md text-sm font-medium ${isActive("/tim-chuyen")
+                      ? "text-blue-600 bg-blue-50 font-semibold"
+                      : "text-slate-700 hover:text-blue-600 hover:bg-slate-50"
+                    }`}
+                >
+                  Tìm chuyến
+                </Link>
+                <Link
+                  href="/gioi-thieu"
+                  className={`px-3 py-2 rounded-md text-sm font-medium ${isActive("/gioi-thieu")
+                      ? "text-blue-600 bg-blue-50 font-semibold"
+                      : "text-slate-700 hover:text-blue-600 hover:bg-slate-50"
+                    }`}
+                >
+                  Giới thiệu
+                </Link>
 
-            {user?.role === "STAFF" && (
-              <Link
-                href="/quan-tri"
-                className={`px-3 py-2 rounded-md text-sm font-medium flex items-center gap-1.5 ${
-                  isActive("/quan-tri")
-                    ? "text-indigo-600 bg-indigo-50 font-semibold"
-                    : "text-indigo-600 hover:bg-indigo-50"
-                }`}
-              >
-                <ShieldAlert className="w-4 h-4 text-indigo-600" />
-                Quản trị
-              </Link>
+                {user && (
+                  <>
+                    <Link
+                      href="/cho-ve/moi"
+                      className={`px-3 py-2 rounded-md text-sm font-medium flex items-center gap-1.5 ${isActive("/cho-ve/moi")
+                          ? "text-blue-600 bg-blue-50 font-semibold"
+                          : "text-slate-700 hover:text-blue-600 hover:bg-slate-50"
+                        }`}
+                    >
+                      <PlusCircle className="w-4 h-4 text-blue-600" />
+                      Đăng ký chờ
+                    </Link>
+                    <Link
+                      href="/yeu-cau"
+                      className={`px-3 py-2 rounded-md text-sm font-medium flex items-center gap-1.5 ${isActive("/yeu-cau")
+                          ? "text-blue-600 bg-blue-50 font-semibold"
+                          : "text-slate-700 hover:text-blue-600 hover:bg-slate-50"
+                        }`}
+                    >
+                      <ClipboardList className="w-4 h-4" />
+                      Yêu cầu của tôi
+                    </Link>
+                  </>
+                )}
+              </>
             )}
           </nav>
 
@@ -128,19 +137,21 @@ export function Navbar({ user, unreadCount = 0 }: NavbarProps) {
           <div className="hidden md:flex items-center gap-3">
             {user ? (
               <>
-                {/* Notification Bell */}
-                <Link
-                  href="/thong-bao"
-                  className="relative p-2 text-slate-600 hover:text-blue-600 hover:bg-slate-100 rounded-full transition-colors"
-                  title="Thông báo"
-                >
-                  <Bell className="w-5 h-5" />
-                  {unreadCount > 0 && (
-                    <span className="absolute top-1 right-1 bg-red-500 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
-                      {unreadCount > 9 ? "9+" : unreadCount}
-                    </span>
-                  )}
-                </Link>
+                {/* Notification Bell (Only for Passengers) */}
+                {user.role !== "STAFF" && (
+                  <Link
+                    href="/thong-bao"
+                    className="relative p-2 text-slate-600 hover:text-blue-600 hover:bg-slate-100 rounded-full transition-colors"
+                    title="Thông báo"
+                  >
+                    <Bell className="w-5 h-5" />
+                    {unreadCount > 0 && (
+                      <span className="absolute top-1 right-1 bg-red-500 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
+                        {unreadCount > 9 ? "9+" : unreadCount}
+                      </span>
+                    )}
+                  </Link>
+                )}
 
                 {/* User Dropdown / Profile Link */}
                 <div className="flex items-center gap-2 pl-2 border-l border-slate-200">
@@ -171,25 +182,25 @@ export function Navbar({ user, unreadCount = 0 }: NavbarProps) {
               </>
             ) : (
               <div className="flex items-center gap-2">
-                <Link
+                <a
                   href="/dang-nhap"
-                  className="px-3.5 py-2 text-sm font-medium text-slate-700 hover:text-blue-600 rounded-md hover:bg-slate-50"
+                  className="px-3.5 py-2 text-sm font-medium text-slate-700 hover:text-blue-600 rounded-md hover:bg-slate-50 cursor-pointer"
                 >
                   Đăng nhập
-                </Link>
-                <Link
+                </a>
+                <a
                   href="/dang-ky"
-                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md shadow-sm"
+                  className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-md shadow-sm cursor-pointer"
                 >
                   Đăng ký
-                </Link>
+                </a>
               </div>
             )}
           </div>
 
           {/* Mobile Menu Button */}
           <div className="flex md:hidden items-center gap-2">
-            {user && (
+            {user && user.role !== "STAFF" && (
               <Link
                 href="/thong-bao"
                 className="relative p-2 text-slate-600 hover:text-blue-600"
@@ -215,30 +226,65 @@ export function Navbar({ user, unreadCount = 0 }: NavbarProps) {
       {/* Mobile Menu Panel */}
       {mobileMenuOpen && (
         <div className="md:hidden border-t border-slate-200 bg-white px-4 pt-2 pb-4 space-y-1">
-          <Link
-            href="/"
-            onClick={() => setMobileMenuOpen(false)}
-            className="block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:bg-slate-100"
-          >
-            Trang chủ
-          </Link>
-          <Link
-            href="/tim-chuyen"
-            onClick={() => setMobileMenuOpen(false)}
-            className="block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:bg-slate-100"
-          >
-            Tìm chuyến
-          </Link>
-          <Link
-            href="/gioi-thieu"
-            onClick={() => setMobileMenuOpen(false)}
-            className="block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:bg-slate-100"
-          >
-            Giới thiệu
-          </Link>
-
-          {user ? (
+          {user?.role === "STAFF" ? (
+            // Staff mobile links: only Giới thiệu & Quản trị
             <>
+              <Link
+                href="/gioi-thieu"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block px-3 py-2 rounded-md text-base font-semibold text-slate-800 hover:bg-slate-100"
+              >
+                Giới thiệu
+              </Link>
+              <Link
+                href="/quan-tri"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block px-3 py-2 rounded-md text-base font-semibold text-indigo-700 bg-indigo-50"
+              >
+                Trang quản trị vận hành
+              </Link>
+              <Link
+                href="/ho-so"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:bg-slate-100"
+              >
+                Hồ sơ cá nhân ({user.name})
+              </Link>
+              <div className="pt-2 border-t border-slate-200">
+                <form action="/api/auth/logout" method="POST">
+                  <button
+                    type="submit"
+                    className="w-full text-left px-3 py-2 text-red-600 font-medium rounded-md hover:bg-red-50"
+                  >
+                    Đăng xuất ({user.email})
+                  </button>
+                </form>
+              </div>
+            </>
+          ) : user ? (
+            // Passenger mobile links
+            <>
+              <Link
+                href="/"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:bg-slate-100"
+              >
+                Trang chủ
+              </Link>
+              <Link
+                href="/tim-chuyen"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:bg-slate-100"
+              >
+                Tìm chuyến
+              </Link>
+              <Link
+                href="/gioi-thieu"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:bg-slate-100"
+              >
+                Giới thiệu
+              </Link>
               <Link
                 href="/cho-ve/moi"
                 onClick={() => setMobileMenuOpen(false)}
@@ -267,15 +313,6 @@ export function Navbar({ user, unreadCount = 0 }: NavbarProps) {
               >
                 Hồ sơ cá nhân ({user.name})
               </Link>
-              {user.role === "STAFF" && (
-                <Link
-                  href="/quan-tri"
-                  onClick={() => setMobileMenuOpen(false)}
-                  className="block px-3 py-2 rounded-md text-base font-semibold text-indigo-700 bg-indigo-50"
-                >
-                  Trang quản trị vận hành
-                </Link>
-              )}
               <div className="pt-2 border-t border-slate-200">
                 <form action="/api/auth/logout" method="POST">
                   <button
@@ -288,22 +325,44 @@ export function Navbar({ user, unreadCount = 0 }: NavbarProps) {
               </div>
             </>
           ) : (
-            <div className="pt-2 border-t border-slate-200 space-y-2">
+            // Guest mobile links
+            <>
               <Link
-                href="/dang-nhap"
+                href="/"
                 onClick={() => setMobileMenuOpen(false)}
-                className="block w-full text-center px-4 py-2 border border-slate-300 rounded-md text-slate-700 font-medium"
+                className="block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:bg-slate-100"
               >
-                Đăng nhập
+                Trang chủ
               </Link>
               <Link
-                href="/dang-ky"
+                href="/tim-chuyen"
                 onClick={() => setMobileMenuOpen(false)}
-                className="block w-full text-center px-4 py-2 bg-blue-600 text-white rounded-md font-medium"
+                className="block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:bg-slate-100"
               >
-                Đăng ký tài khoản
+                Tìm chuyến
               </Link>
-            </div>
+              <Link
+                href="/gioi-thieu"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:bg-slate-100"
+              >
+                Giới thiệu
+              </Link>
+              <div className="pt-2 border-t border-slate-200 space-y-2">
+                <a
+                  href="/dang-nhap"
+                  className="block w-full text-center px-4 py-2 border border-slate-300 rounded-md text-slate-700 font-medium hover:bg-slate-50 cursor-pointer"
+                >
+                  Đăng nhập
+                </a>
+                <a
+                  href="/dang-ky"
+                  className="block w-full text-center px-4 py-2 bg-blue-600 text-white rounded-md font-medium hover:bg-blue-700 cursor-pointer shadow-sm"
+                >
+                  Đăng ký tài khoản
+                </a>
+              </div>
+            </>
           )}
         </div>
       )}

@@ -4,8 +4,9 @@ import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/db";
-import { setSessionCookie, clearSessionCookie } from "@/lib/auth";
+import { setSessionCookie, clearSessionCookie, constantTimeCompare } from "@/lib/auth";
 import { loginSchema, registerSchema } from "@/lib/validations";
+import { isAccountAllowed, recordAllowedAccount, recordLoginTime } from "@/lib/allowedAccounts";
 
 export interface ActionResult {
   success: boolean;
@@ -17,6 +18,7 @@ export async function loginAction(formData: FormData): Promise<ActionResult> {
   const rawData = {
     email: formData.get("email"),
     password: formData.get("password"),
+    accountType: formData.get("accountType") || "PASSENGER",
   };
 
   const parsed = loginSchema.safeParse(rawData);
@@ -47,6 +49,24 @@ export async function loginAction(formData: FormData): Promise<ActionResult> {
     };
   }
 
+  // Enforce server-side role matching
+  if (user.role !== parsed.data.accountType) {
+    return {
+      success: false,
+      error: "Tài khoản này không thuộc loại đã chọn. Vui lòng chọn đúng loại tài khoản.",
+    };
+  }
+
+  // Check if account is recorded in allowed accounts list
+  if (!isAccountAllowed(user.email)) {
+    return {
+      success: false,
+      error: "Tài khoản không có trong danh sách được phép đăng nhập của hệ thống.",
+    };
+  }
+
+  recordLoginTime(user.email);
+
   await setSessionCookie({
     id: user.id,
     name: user.name,
@@ -56,22 +76,40 @@ export async function loginAction(formData: FormData): Promise<ActionResult> {
   });
 
   const redirectTo = formData.get("redirectTo") as string;
-  if (redirectTo && redirectTo.startsWith("/")) {
-    redirect(redirectTo);
-  } else if (user.role === "STAFF") {
+  if (user.role === "STAFF") {
+    if (redirectTo && redirectTo.startsWith("/") && redirectTo.startsWith("/quan-tri")) {
+      redirect(redirectTo);
+    }
     redirect("/quan-tri");
   } else {
+    if (redirectTo && redirectTo.startsWith("/") && !redirectTo.startsWith("/quan-tri")) {
+      redirect(redirectTo);
+    }
     redirect("/yeu-cau");
   }
 }
 
-export async function quickLoginAction(email: string, redirectTo?: string) {
+export async function quickLoginAction(
+  email: string,
+  expectedRole: "PASSENGER" | "STAFF" = "PASSENGER",
+  redirectTo?: string
+): Promise<ActionResult | void> {
   const user = await prisma.user.findUnique({
     where: { email: email.toLowerCase().trim() },
   });
 
   if (!user) {
-    throw new Error("Tài khoản demo không tồn tại");
+    return {
+      success: false,
+      error: "Tài khoản demo không tồn tại",
+    };
+  }
+
+  if (user.role !== expectedRole) {
+    return {
+      success: false,
+      error: "Tài khoản này không thuộc loại đã chọn. Vui lòng chọn đúng loại tài khoản.",
+    };
   }
 
   await setSessionCookie({
@@ -82,32 +120,65 @@ export async function quickLoginAction(email: string, redirectTo?: string) {
     defaultChannel: user.defaultChannel as "WEBSITE" | "SMS" | "EMAIL",
   });
 
-  if (redirectTo && redirectTo.startsWith("/")) {
-    redirect(redirectTo);
-  } else if (user.role === "STAFF") {
+  if (user.role === "STAFF") {
+    if (redirectTo && redirectTo.startsWith("/") && redirectTo.startsWith("/quan-tri")) {
+      redirect(redirectTo);
+    }
     redirect("/quan-tri");
   } else {
+    if (redirectTo && redirectTo.startsWith("/") && !redirectTo.startsWith("/quan-tri")) {
+      redirect(redirectTo);
+    }
     redirect("/yeu-cau");
   }
 }
 
 export async function registerAction(formData: FormData): Promise<ActionResult> {
-  const rawData = {
+  const accountType = (formData.get("accountType") as string) || "PASSENGER";
+
+  const rawData: any = {
+    accountType,
     name: formData.get("name"),
     email: formData.get("email"),
     password: formData.get("password"),
     confirmPassword: formData.get("confirmPassword"),
-    phone: formData.get("phone") || undefined,
-    defaultChannel: formData.get("defaultChannel") || "WEBSITE",
   };
+
+  if (accountType === "STAFF") {
+    rawData.inviteCode = formData.get("inviteCode");
+    rawData.defaultChannel = "WEBSITE";
+  } else {
+    rawData.phone = formData.get("phone") || undefined;
+    rawData.defaultChannel = formData.get("defaultChannel") || "WEBSITE";
+  }
 
   const parsed = registerSchema.safeParse(rawData);
   if (!parsed.success) {
+    const firstError = parsed.error.errors[0]?.message || "Thông tin đăng ký không hợp lệ.";
     return {
       success: false,
-      error: "Thông tin đăng ký không hợp lệ.",
+      error: firstError,
       fieldErrors: parsed.error.flatten().fieldErrors,
     };
+  }
+
+  // Staff registration validation: check process.env.STAFF_INVITE_CODE
+  if (accountType === "STAFF") {
+    const envInviteCode = process.env.STAFF_INVITE_CODE;
+    if (!envInviteCode || envInviteCode.trim() === "") {
+      return {
+        success: false,
+        error: "Đăng ký tài khoản quản trị hiện chưa được mở.",
+      };
+    }
+
+    const submittedCode = (parsed.data.inviteCode || "").trim();
+    if (!submittedCode || !constantTimeCompare(submittedCode, envInviteCode.trim())) {
+      return {
+        success: false,
+        error: "Mã mời không đúng.",
+      };
+    }
   }
 
   const existing = await prisma.user.findUnique({
@@ -122,29 +193,44 @@ export async function registerAction(formData: FormData): Promise<ActionResult> 
   }
 
   const passwordHash = await bcrypt.hash(parsed.data.password, 10);
+  // Derive role server-side only
+  const role: "PASSENGER" | "STAFF" = accountType === "STAFF" ? "STAFF" : "PASSENGER";
+
   const newUser = await prisma.user.create({
     data: {
       name: parsed.data.name.trim(),
       email: parsed.data.email.toLowerCase().trim(),
       passwordHash,
-      phone: parsed.data.phone?.trim() || null,
-      role: "PASSENGER",
-      defaultChannel: parsed.data.defaultChannel,
+      phone: role === "PASSENGER" ? (parsed.data.phone?.trim() || null) : null,
+      role,
+      defaultChannel: role === "PASSENGER" ? (parsed.data.defaultChannel || "WEBSITE") : "WEBSITE",
     },
+  });
+
+  // Automatically record newly registered account in allowed accounts file
+  recordAllowedAccount({
+    email: newUser.email,
+    name: newUser.name,
+    role: newUser.role,
   });
 
   await setSessionCookie({
     id: newUser.id,
     name: newUser.name,
     email: newUser.email,
-    role: "PASSENGER",
+    role,
     defaultChannel: newUser.defaultChannel as "WEBSITE" | "SMS" | "EMAIL",
   });
 
-  redirect("/yeu-cau");
+  if (role === "STAFF") {
+    redirect("/quan-tri");
+  } else {
+    redirect("/yeu-cau");
+  }
 }
 
 export async function logoutAction() {
   await clearSessionCookie();
   redirect("/dang-nhap");
 }
+

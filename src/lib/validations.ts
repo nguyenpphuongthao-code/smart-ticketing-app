@@ -9,15 +9,30 @@ export const registerSchema = z
     confirmPassword: z.string().min(8, "Vui lòng xác nhận mật khẩu"),
     phone: z.string().optional(),
     defaultChannel: z.enum(CHANNELS).default("WEBSITE"),
+    accountType: z.enum(["PASSENGER", "STAFF"]).default("PASSENGER"),
+    inviteCode: z.string().optional(),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Mật khẩu xác nhận không khớp",
     path: ["confirmPassword"],
-  });
+  })
+  .refine(
+    (data) => {
+      if (data.accountType === "STAFF") {
+        return !!data.inviteCode && data.inviteCode.trim().length > 0;
+      }
+      return true;
+    },
+    {
+      message: "Vui lòng nhập mã mời quản trị",
+      path: ["inviteCode"],
+    }
+  );
 
 export const loginSchema = z.object({
   email: z.string().email("Địa chỉ email không hợp lệ"),
   password: z.string().min(1, "Vui lòng nhập mật khẩu"),
+  accountType: z.enum(["PASSENGER", "STAFF"]).default("PASSENGER"),
 });
 
 export const createWaitRequestSchema = z.object({

@@ -27,6 +27,24 @@ npm run dev
 
 Mở trình duyệt và truy cập: [http://localhost:3000](http://localhost:3000)
 
+### Cấu hình biến môi trường (Environment Variables)
+
+Xem tệp `.env.example`:
+- `JWT_SECRET`: Khóa bí mật ký JWT cookie session.
+- `STAFF_INVITE_CODE`: Mã mời bí mật dùng để đăng ký tài khoản Quản trị / Nhân viên điều hành (`STAFF`). Nếu để trống hoặc không cấu hình, tính năng đăng ký tài khoản quản trị sẽ tự động bị vô hiệu hóa vì lý do an toàn.
+
+---
+
+## 2. Phân loại tài khoản & Bộ chọn loại tài khoản (Account-Type Selector)
+
+Hệ thống hỗ trợ bộ chọn loại tài khoản dạng radio cards / segmented control trên cả hai trang `/dang-nhap` và `/dang-ky`:
+1. **Hành khách (`PASSENGER`):** Mặc định, dùng để đăng ký chờ vé và theo dõi trạng thái yêu cầu.
+2. **Quản trị / Nhân viên điều hành (`STAFF`):** Dành riêng cho nhân sự vận hành đường sắt truy cập `/quan-tri/*`. Yêu cầu mã mời quản trị (`STAFF_INVITE_CODE`) khi đăng ký mới.
+
+Hệ thống kiểm tra vai trò nghiêm ngặt ở phía máy chủ (Server-side role matching & constant-time compare):
+- Nếu đăng nhập bằng email nhân viên nhưng chọn "Hành khách" (hoặc ngược lại), hệ thống sẽ từ chối với thông báo: *"Tài khoản này không thuộc loại đã chọn. Vui lòng chọn đúng loại tài khoản."*
+- Toàn bộ các route `/quan-tri/*` được bảo vệ bởi middleware và server-side validation: hành khách truy cập trực tiếp sẽ nhận mã lỗi 403 Forbidden hoặc bị chuyển hướng.
+
 ---
 
 ## 2. Danh sách tài khoản thử nghiệm (Demo Accounts)

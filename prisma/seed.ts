@@ -15,8 +15,34 @@ async function main() {
   await prisma.trip.deleteMany({});
   await prisma.user.deleteMany({});
 
-  // 2. Tạo tài khoản mẫu (Mật khẩu: Demo@12345)
+  // 2. Tạo tài khoản mẫu chính thức: 1 nhân viên, 1 khách hàng
+  const staffOfficialHash = await bcrypt.hash("NhanVien@2027", 10);
+  const passengerOfficialHash = await bcrypt.hash("HanhKhach@2027", 10);
   const passwordHash = await bcrypt.hash("Demo@12345", 10);
+
+  // Tài khoản chính thức 1: Nhân viên điều hành
+  await prisma.user.create({
+    data: {
+      email: "nhanvien@chovethongminh.vn",
+      name: "Nguyễn Quản Trị (Nhân viên điều hành)",
+      passwordHash: staffOfficialHash,
+      role: "STAFF",
+      defaultChannel: "WEBSITE",
+      phone: "0987654321",
+    },
+  });
+
+  // Tài khoản chính thức 2: Hành khách
+  await prisma.user.create({
+    data: {
+      email: "hanhkhach@chovethongminh.vn",
+      name: "Trần Hành Khách",
+      passwordHash: passengerOfficialHash,
+      role: "PASSENGER",
+      defaultChannel: "WEBSITE",
+      phone: "0901234567",
+    },
+  });
 
   const staffUser = await prisma.user.create({
     data: {

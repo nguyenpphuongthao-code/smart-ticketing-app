@@ -2,123 +2,274 @@ import React from "react";
 import Link from "next/link";
 import {
   Train,
-  ShieldAlert,
   HelpCircle,
   Lightbulb,
-  CheckCircle2,
   XCircle,
-  FileText,
   ArrowRight,
+  Cpu,
+  BarChart3,
 } from "lucide-react";
 
 export default function GioiThieuPage() {
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full space-y-10">
-      {/* Title */}
-      <div>
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-100 text-blue-700 font-bold text-xs mb-3">
+    <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full space-y-10">
+      {/* Hero Header */}
+      <div className="space-y-3 border-b border-slate-200 pb-8">
+        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-100 text-blue-700 font-bold text-xs">
           <Train className="w-3.5 h-3.5" />
-          Đề tài môn học: Chuyển đổi số trong doanh nghiệp
+          Đề tài môn học: Chuyển đổi số trong doanh nghiệp vận tải
         </div>
-        <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">
-          Giới thiệu dự án "Chờ vé thông minh"
+        <h1 className="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+          Hệ thống "Chờ vé thông minh" (Smart Ticketing Waitlist)
         </h1>
-        <p className="mt-2 text-base text-slate-600 leading-relaxed">
-          Giải pháp ghi nhận và phân tích nhu cầu di chuyển chưa được đáp ứng khi tàu kín chỗ dịp
-          cao điểm, cung cấp cơ sở dữ liệu thực tiễn hỗ trợ lập kế hoạch vận hành đường sắt.
+        <p className="text-base sm:text-lg text-slate-600 leading-relaxed max-w-3xl">
+          Nền tảng thu nhận và phân tích nhu cầu di chuyển chưa được đáp ứng khi tàu kín chỗ dịp
+          cao điểm, cung cấp cơ sở dữ liệu thực nghiệm phục vụ tối ưu hóa điều phối tải trọng và
+          lập kế hoạch tăng toa cho ngành đường sắt.
         </p>
       </div>
 
-      {/* Bài toán thực tế */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-sm space-y-4">
-        <div className="flex items-center gap-2 text-lg font-bold text-slate-900">
-          <HelpCircle className="w-5 h-5 text-blue-600" />
-          <span>Bài toán thực tiễn đặt ra</span>
+      {/* 1. Thực trạng & Nỗi đau ngành vận tải */}
+      <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-sm space-y-5">
+        <div className="flex items-center gap-2.5 text-lg font-bold text-slate-900 border-b border-slate-100 pb-3">
+          <HelpCircle className="w-5 h-5 text-rose-600" />
+          <span>1. Thực trạng & Nỗi đau trong vận hành cao điểm</span>
         </div>
-        <p className="text-sm text-slate-600 leading-relaxed">
-          Vào các dịp lễ, Tết hay cuối tuần cao điểm, nhu cầu đi lại bằng đường sắt tăng vọt. Rất
-          nhiều chuyến tàu nhanh chóng hết vé. Khi hành khách tìm vé và thấy trạng thái "Hết vé", họ
-          thường rời khỏi website.
-        </p>
-        <p className="text-sm text-slate-600 leading-relaxed">
-          Hệ quả là: <strong>Nhu cầu chưa được đáp ứng hoàn toàn không để lại dấu vết trong dữ liệu</strong>.
-          Doanh nghiệp vận tải không thể biết chính xác chuyến nào, ngày nào hay tuyến nào đang có
-          bao nhiêu người thực sự muốn đi nhưng không mua được vé. Việc quyết định nối thêm toa hay
-          chạy thêm tàu tăng cường do đó chủ yếu dựa trên phỏng đoán hoặc kinh nghiệm cảm tính.
-        </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm text-slate-600 leading-relaxed">
+          <div className="space-y-3 bg-slate-50 p-5 rounded-xl border border-slate-100">
+            <h4 className="font-bold text-slate-900 flex items-center gap-1.5 text-sm">
+              <span className="w-2 h-2 rounded-full bg-rose-500"></span>
+              Về phía hành khách
+            </h4>
+            <p>
+              Vào các đợt cao điểm Lễ, Tết hoặc mùa hè, vé tàu hỏa các tuyến trọng điểm (Hà Nội ↔
+              Sài Gòn, Đà Nẵng, Nha Trang...) thường cháy vé rất sớm. Khi thấy biển báo "Hết vé",
+              hành khách phải liên tục F5 trang web nhiều lần trong ngày với hy vọng ai đó trả vé,
+              hoặc phải chuyển sang các phương tiện khác với chi phí đắt đỏ hơn.
+            </p>
+          </div>
+          <div className="space-y-3 bg-slate-50 p-5 rounded-xl border border-slate-100">
+            <h4 className="font-bold text-slate-900 flex items-center gap-1.5 text-sm">
+              <span className="w-2 h-2 rounded-full bg-amber-500"></span>
+              Về phía đơn vị vận tải
+            </h4>
+            <p>
+              Khi hành khách thấy hết vé và đóng website, toàn bộ nhu cầu tiềm năng biến mất không
+              để lại dữ liệu. Bộ phận điều hành hoàn toàn "mù thông tin" về lượng khách thực sự muốn
+              đi. Việc quyết định nối thêm toa xe hay lập đoàn tàu tăng cường phần lớn dựa vào cảm
+              tính hoặc thống kê bán vé lịch sử, dẫn đến nguy cơ thừa/thiếu tải trọng.
+            </p>
+          </div>
+        </div>
       </div>
 
-      {/* Giải pháp đề xuất */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-sm space-y-4">
-        <div className="flex items-center gap-2 text-lg font-bold text-slate-900">
+      {/* 2. Mục tiêu chuyển đổi số */}
+      <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-sm space-y-5">
+        <div className="flex items-center gap-2.5 text-lg font-bold text-slate-900 border-b border-slate-100 pb-3">
           <Lightbulb className="w-5 h-5 text-amber-500" />
-          <span>Ý tưởng giải pháp và cách thức hoạt động</span>
+          <span>2. Mục tiêu chuyển đổi số và Nguyên tắc cốt lõi</span>
         </div>
-        <div className="space-y-3 text-sm text-slate-600 leading-relaxed">
-          <p>
-            Hệ thống <strong>Chờ vé thông minh</strong> đóng vai trò là một kênh ghi nhận nhu cầu
-            dự bị minh bạch:
-          </p>
-          <ul className="list-disc pl-5 space-y-2 text-xs sm:text-sm">
-            <li>
-              <strong>Đối với hành khách:</strong> Được phép đăng ký nguyện vọng chờ vé khi chuyến
-              tàu mong muốn đã hết chỗ. Hành khách có thể linh hoạt chọn các điều kiện thay thế (chấp
-              nhận lệch ngày ±1, chuyến khác cùng tuyến, loại chỗ khác). Khi có chỗ trống hoặc tàu
-              tăng cường, hệ thống gửi thông báo giả lập để hành khách kịp thời vào đặt vé.
-            </li>
-            <li>
-              <strong>Đối với nhân sự điều hành:</strong> Hệ thống tổng hợp dữ liệu nhu cầu chờ theo
-              thời gian thực, phân tích theo từng chuyến, ngày khởi hành và tuyến đường. Bảng điều
-              khiển đưa ra các <em>"Gợi ý để nhân sự xem xét"</em> (ví dụ: phát hiện chuyến A1 ngày
-              04/02 có 10 vé chờ, đủ cơ sở xem xét kỹ thuật để tăng toa).
-            </li>
-          </ul>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="p-4 rounded-xl bg-blue-50/50 border border-blue-100 space-y-2">
+            <div className="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold text-xs">
+              01
+            </div>
+            <h4 className="font-bold text-slate-900 text-sm">Thu thập dữ liệu nhu cầu thực</h4>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Biến các lượt truy cập không mua được vé thành bản ghi nhu cầu có cấu trúc: chặng đi,
+              ngày khởi hành, hạng ghế và mức độ chấp nhận linh hoạt.
+            </p>
+          </div>
+
+          <div className="p-4 rounded-xl bg-indigo-50/50 border border-indigo-100 space-y-2">
+            <div className="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold text-xs">
+              02
+            </div>
+            <h4 className="font-bold text-slate-900 text-sm">Khớp chỗ & Tái phân phối vé trả</h4>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Tự động gợi ý ghép chỗ khi có hành khách trả vé hoặc mở thêm toa mới theo 4 cấp độ ưu
+              tiên rõ ràng, minh bạch và không thiên vị.
+            </p>
+          </div>
+
+          <div className="p-4 rounded-xl bg-emerald-50/50 border border-emerald-100 space-y-2">
+            <div className="w-8 h-8 rounded-lg bg-emerald-600 text-white flex items-center justify-center font-bold text-xs">
+              03
+            </div>
+            <h4 className="font-bold text-slate-900 text-sm">Hỗ trợ ra quyết định tăng toa</h4>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              Cung cấp biểu đồ nhiệt nhu cầu, phát hiện các điểm nghẽn và đưa ra khuyến nghị kỹ thuật
+              để nhân viên điều hành cân nhắc nối toa hoặc chạy thêm mác tàu.
+            </p>
+          </div>
         </div>
       </div>
 
-      {/* Hard Constraints Box: BẢN DEMO KHÔNG LÀM */}
+      {/* 3. Quy trình vận hành & Thuật toán ghép chỗ */}
+      <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-sm space-y-5">
+        <div className="flex items-center gap-2.5 text-lg font-bold text-slate-900 border-b border-slate-100 pb-3">
+          <Cpu className="w-5 h-5 text-indigo-600" />
+          <span>3. Quy trình vận hành & Cơ chế ghép chỗ 4 cấp độ</span>
+        </div>
+
+        <div className="space-y-4 text-xs sm:text-sm text-slate-600 leading-relaxed">
+          <p>
+            Khi kho vé phát sinh chỗ trống (do có khách hủy vé, trả vé hoặc đơn vị bổ sung sức
+            chứa), thuật toán ghép chỗ sẽ quét hàng đợi và phân loại mức độ phù hợp:
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">
+            <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
+              <div className="flex items-center gap-2 font-bold text-slate-900 text-xs">
+                <span className="px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 text-[10px]">
+                  Cấp 1 - Ưu tiên cao nhất
+                </span>
+                <span>Khớp chính xác 100% (Exact Match)</span>
+              </div>
+              <p className="text-xs text-slate-600">
+                Đúng chuyến tàu, đúng ngày khởi hành, đúng hạng ghế mong muốn và số lượng vé phù hợp.
+              </p>
+            </div>
+
+            <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
+              <div className="flex items-center gap-2 font-bold text-slate-900 text-xs">
+                <span className="px-2 py-0.5 rounded bg-blue-100 text-blue-800 text-[10px]">
+                  Cấp 2 - Linh hoạt ngày
+                </span>
+                <span>Chấp nhận lệch ngày (±1 ngày)</span>
+              </div>
+              <p className="text-xs text-slate-600">
+                Hành khách có tích chọn "Chấp nhận đi lệch ±1 ngày", cùng mác tàu hoặc tuyến đường.
+              </p>
+            </div>
+
+            <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
+              <div className="flex items-center gap-2 font-bold text-slate-900 text-xs">
+                <span className="px-2 py-0.5 rounded bg-amber-100 text-amber-800 text-[10px]">
+                  Cấp 3 - Linh hoạt chuyến
+                </span>
+                <span>Chuyến khác cùng tuyến & ngày</span>
+              </div>
+              <p className="text-xs text-slate-600">
+                Hành khách chọn "Chấp nhận chuyến khác cùng tuyến trong ngày" có giờ chạy gần nhất.
+              </p>
+            </div>
+
+            <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
+              <div className="flex items-center gap-2 font-bold text-slate-900 text-xs">
+                <span className="px-2 py-0.5 rounded bg-purple-100 text-purple-800 text-[10px]">
+                  Cấp 4 - Linh hoạt hạng ghế
+                </span>
+                <span>Chấp nhận đổi loại chỗ</span>
+              </div>
+              <p className="text-xs text-slate-600">
+                Hành khách tích chọn "Chấp nhận hạng ghế khác" (ví dụ: chuyển từ Giường nằm sang Ghế
+                ngồi mềm).
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 4. Bộ 6 chỉ số đo lường hiệu quả (KPIs) */}
+      <div className="bg-white border border-slate-200 rounded-2xl p-6 sm:p-8 shadow-sm space-y-5">
+        <div className="flex items-center gap-2.5 text-lg font-bold text-slate-900 border-b border-slate-100 pb-3">
+          <BarChart3 className="w-5 h-5 text-emerald-600" />
+          <span>4. Bộ chỉ số đo lường hiệu quả (KPI Framework)</span>
+        </div>
+        <p className="text-xs sm:text-sm text-slate-600 leading-relaxed">
+          Hệ thống xây dựng 6 chỉ số định lượng cụ thể để bộ phận quản trị đánh giá mức độ thành
+          công của chuyển đổi số và chất lượng điều hành:
+        </p>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-xs">
+          <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
+            <span className="font-bold text-slate-900">KPI 1: Tỷ lệ chuyến quá tải</span>
+            <p className="text-slate-500">
+              Phần trăm số chuyến có tồn chỗ bằng 0 và có danh sách chờ tích lũy trên tổng số chuyến.
+            </p>
+          </div>
+          <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
+            <span className="font-bold text-slate-900">KPI 2: Tỷ lệ đáp ứng nhu cầu chờ</span>
+            <p className="text-slate-500">
+              Số yêu cầu chờ được khớp chỗ thành công / tổng số yêu cầu chờ đăng ký trong kỳ.
+            </p>
+          </div>
+          <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
+            <span className="font-bold text-slate-900">KPI 3: Thời gian phản hồi trung bình</span>
+            <p className="text-slate-500">
+              Thời gian từ lúc phát sinh vé trả/tăng toa đến khi phát thông báo mời đặt vé.
+            </p>
+          </div>
+          <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
+            <span className="font-bold text-slate-900">KPI 4: Tỷ lệ chấp nhận phương án thay thế</span>
+            <p className="text-slate-500">
+              Đo lường mức độ sẵn sàng đi lệch ngày hoặc đổi chuyến của hành khách khi được gợi ý.
+            </p>
+          </div>
+          <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
+            <span className="font-bold text-slate-900">KPI 5: Hệ số lấp đầy chỗ tăng cường</span>
+            <p className="text-slate-500">
+              Tỷ lệ chỗ bán được trên các toa nối thêm hoặc chuyến tăng cường được kích hoạt.
+            </p>
+          </div>
+          <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl space-y-1">
+            <span className="font-bold text-slate-900">KPI 6: Mức độ minh bạch & hài lòng</span>
+            <p className="text-slate-500">
+              Tỷ lệ hài lòng của khách khi được cập nhật số thứ tự chờ và tiến độ rõ ràng.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* 5. Hard Constraints Box: BẢN DEMO KHÔNG LÀM */}
       <div className="bg-rose-50 border-2 border-rose-200 rounded-2xl p-6 sm:p-8 space-y-4">
-        <div className="flex items-center gap-2 text-lg font-bold text-rose-900">
+        <div className="flex items-center gap-2.5 text-lg font-bold text-rose-900 border-b border-rose-200/80 pb-3">
           <XCircle className="w-5 h-5 text-rose-600" />
-          <span>Phạm vi & Giới hạn: Bản demo KHÔNG làm</span>
+          <span>5. Phạm vi nghiên cứu & Giới hạn kỹ thuật ("Bản demo KHÔNG làm")</span>
         </div>
         <p className="text-xs sm:text-sm text-rose-800 leading-relaxed">
-          Nhằm bảo đảm tuân thủ nguyên tắc nghiên cứu học thuật và không gây nhầm lẫn cho người
-          dùng, hệ thống tuân thủ nghiêm ngặt các giới hạn kỹ thuật sau:
+          Nhằm bảo đảm tính khách quan trong nghiên cứu học thuật, hệ thống tuân thủ nghiêm ngặt các
+          giới hạn kỹ thuật và pháp lý sau:
         </p>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-rose-950 font-medium pt-2">
-          <div className="bg-white/80 p-3 rounded-lg border border-rose-200 flex items-start gap-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs text-rose-950 font-medium pt-1">
+          <div className="bg-white/90 p-3 rounded-lg border border-rose-200 flex items-start gap-2 shadow-xs">
             <XCircle className="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" />
-            <span>KHÔNG kết nối hệ thống bán vé thật của bất kỳ doanh nghiệp nào</span>
+            <span>KHÔNG kết nối API hệ thống bán vé thương mại thật của bất kỳ đơn vị nào.</span>
           </div>
-          <div className="bg-white/80 p-3 rounded-lg border border-rose-200 flex items-start gap-2">
+          <div className="bg-white/90 p-3 rounded-lg border border-rose-200 flex items-start gap-2 shadow-xs">
             <XCircle className="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" />
-            <span>KHÔNG giữ chỗ (seat holding) hoặc can thiệp kho vé thực</span>
+            <span>KHÔNG giữ chỗ (seat holding) hoặc can thiệp giữ chỗ trước của hành khách.</span>
           </div>
-          <div className="bg-white/80 p-3 rounded-lg border border-rose-200 flex items-start gap-2">
+          <div className="bg-white/90 p-3 rounded-lg border border-rose-200 flex items-start gap-2 shadow-xs">
             <XCircle className="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" />
-            <span>KHÔNG thanh toán tiền hay thu bất kỳ khoản phí nào</span>
+            <span>KHÔNG thu tiền, cọc giữ chỗ hay bất kỳ khoản phí dịch vụ tài chính nào.</span>
           </div>
-          <div className="bg-white/80 p-3 rounded-lg border border-rose-200 flex items-start gap-2">
+          <div className="bg-white/90 p-3 rounded-lg border border-rose-200 flex items-start gap-2 shadow-xs">
             <XCircle className="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" />
-            <span>KHÔNG dùng AI dự báo suy đoán hay định giá linh hoạt</span>
+            <span>KHÔNG áp dụng thuật toán định giá linh hoạt động (dynamic surge pricing).</span>
           </div>
-          <div className="bg-white/80 p-3 rounded-lg border border-rose-200 flex items-start gap-2 sm:col-span-2">
+          <div className="bg-white/90 p-3 rounded-lg border border-rose-200 flex items-start gap-2 sm:col-span-2 shadow-xs">
             <XCircle className="w-4 h-4 text-rose-600 flex-shrink-0 mt-0.5" />
             <span>
-              KHÔNG tự động quyết định thêm toa/chuyến hoặc tự động gán vé: Mọi quyết định vận hành
-              đều do con người (nhân viên điều hành) xem xét và click xác nhận.
+              KHÔNG tự động gán vé hoặc tự động nối toa: Mọi đề xuất điều hành đều có vai trò con
+              người (nhân viên điều hành) kiểm tra, xác nhận và chịu trách nhiệm.
             </span>
           </div>
         </div>
       </div>
 
-      <div className="text-center pt-4">
+      {/* Navigation CTA */}
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
         <Link
           href="/tim-chuyen"
-          className="inline-flex items-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm rounded-xl shadow-sm transition"
+          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold text-sm rounded-xl shadow-sm transition"
         >
-          Trải nghiệm tìm chuyến và đăng ký chờ ngay <ArrowRight className="w-4 h-4" />
+          Trải nghiệm tìm chuyến & đăng ký chờ <ArrowRight className="w-4 h-4" />
+        </Link>
+        <Link
+          href="/quan-tri"
+          className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold text-sm rounded-xl transition"
+        >
+          Đến trung tâm điều hành quản trị <BarChart3 className="w-4 h-4" />
         </Link>
       </div>
     </div>

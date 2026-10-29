@@ -1,0 +1,22 @@
+version: "3.8"
+
+services:
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: cho-ve-thong-minh
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - JWT_SECRET=smart-ticket-waitlist-demo-secret-key-32chars-min!
+    volumes:
+      # Lưu trữ database SQLite bền vững trên ổ đĩa server
+      - db_data:/app/prisma
+
+volumes:
+  db_data:
+    driver: local

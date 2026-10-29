@@ -47,21 +47,21 @@ describe("Fresh Seed Verification & Business Rules", () => {
     // 4. Đã hủy = 1
     expect(cancelledRequests.length).toBe(1);
 
-    // 5. Waiting tickets by trip: A1 04/02 = 10, B2 05/02 = 2, C3 05/02 = 1
-    const a1_04_tickets = pendingRequests
-      .filter((r) => r.trip.code === "A1" && r.trip.departureDate === "2027-02-04")
+    // 5. Waiting tickets by trip: SE31 04/11 = 10, SE11 05/11 = 2, SE12 05/11 = 1
+    const se31_04_tickets = pendingRequests
+      .filter((r) => r.trip.code === "SE31" && r.trip.departureDate === "2026-11-04")
       .reduce((sum, r) => sum + r.tickets, 0);
-    expect(a1_04_tickets).toBe(10);
+    expect(se31_04_tickets).toBe(10);
 
-    const b2_05_tickets = pendingRequests
-      .filter((r) => r.trip.code === "B2" && r.trip.departureDate === "2027-02-05")
+    const se11_05_tickets = pendingRequests
+      .filter((r) => r.trip.code === "SE11" && r.trip.departureDate === "2026-11-05")
       .reduce((sum, r) => sum + r.tickets, 0);
-    expect(b2_05_tickets).toBe(2);
+    expect(se11_05_tickets).toBe(2);
 
-    const c3_05_tickets = pendingRequests
-      .filter((r) => r.trip.code === "C3" && r.trip.departureDate === "2027-02-05")
+    const se12_05_tickets = pendingRequests
+      .filter((r) => r.trip.code === "SE12" && r.trip.departureDate === "2026-11-05")
       .reduce((sum, r) => sum + r.tickets, 0);
-    expect(c3_05_tickets).toBe(1);
+    expect(se12_05_tickets).toBe(1);
   });
 
   it("calculates KPI metrics correctly according to formulas", () => {

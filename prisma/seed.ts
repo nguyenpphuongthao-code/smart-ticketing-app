@@ -1,10 +1,24 @@
 import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import fs from "fs";
+import path from "path";
 
 const prisma = new PrismaClient();
 
+interface CsvTripRow {
+  code: string;
+  direction: string;
+  origin: string;
+  destination: string;
+  departureDate: string;
+  departureTime: string;
+  seatClass: string;
+  capacity: number;
+  sold: number;
+}
+
 async function main() {
-  console.log("--- Bắt đầu khởi tạo dữ liệu mẫu (Seed Data) ---");
+  console.log("--- Bắt đầu nạp dữ liệu chuyến tàu thật từ data/trips_dataset.csv ---");
 
   // 1. Dọn dẹp dữ liệu cũ (đảm bảo tính idempotent)
   await prisma.notification.deleteMany({});
@@ -110,123 +124,111 @@ async function main() {
     },
   });
 
-  console.log("-> Đã tạo 1 STAFF và 5 PASSENGERS");
+  console.log("-> Đã tạo các tài khoản người dùng (STAFF và PASSENGER)");
 
-  // 3. Tạo các chuyến tàu
-  // A1: Hà Nội - Đà Nẵng
-  const tripA1_03 = await prisma.trip.create({
-    data: {
-      code: "A1",
-      origin: "Hà Nội",
-      destination: "Đà Nẵng",
-      departureDate: "2027-02-03",
-      departureTime: "06:00",
+  // 3. Đọc dữ liệu thật từ data/trips_dataset.csv
+  const csvPath = path.join(process.cwd(), "data/trips_dataset.csv");
+  if (!fs.existsSync(csvPath)) {
+    throw new Error(`Không tìm thấy file dataset: ${csvPath}`);
+  }
+
+  const fileContent = fs.readFileSync(csvPath, "utf8");
+  const lines = fileContent.trim().split("\n");
+
+  const tripGroups = new Map<
+    string,
+    {
+      code: string;
+      origin: string;
+      destination: string;
+      departureDate: string;
+      departureTime: string;
       inventories: {
-        create: [
-          { seatClass: "Ghế ngồi mềm", capacity: 50, sold: 35 },
-          { seatClass: "Giường nằm khoang 4", capacity: 28, sold: 20 },
-          { seatClass: "Giường nằm khoang 6", capacity: 42, sold: 30 },
-        ],
+        seatClass: string;
+        capacity: number;
+        sold: number;
+      }[];
+    }
+  >();
+
+  for (let i = 1; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+    const parts = line.split(",").map((p) => p.trim());
+    if (parts.length < 9) continue;
+
+    const [code, , origin, destination, departureDate, departureTime, seatClass, capacityStr, soldStr] = parts;
+    const capacity = parseInt(capacityStr, 10) || 0;
+    const sold = parseInt(soldStr, 10) || 0;
+
+    const tripKey = `${code}|${origin}|${destination}|${departureDate}|${departureTime}`;
+    if (!tripGroups.has(tripKey)) {
+      tripGroups.set(tripKey, {
+        code,
+        origin,
+        destination,
+        departureDate,
+        departureTime,
+        inventories: [],
+      });
+    }
+
+    tripGroups.get(tripKey)!.inventories.push({
+      seatClass,
+      capacity,
+      sold,
+    });
+  }
+
+  console.log(`-> Đã phân tích ${tripGroups.size} chuyến tàu thật từ CSV.`);
+
+  // Nạp các chuyến tàu vào Database theo từng đợt
+  const createdTripsMap = new Map<string, any>();
+
+  for (const tripData of tripGroups.values()) {
+    const createdTrip = await prisma.trip.create({
+      data: {
+        code: tripData.code,
+        origin: tripData.origin,
+        destination: tripData.destination,
+        departureDate: tripData.departureDate,
+        departureTime: tripData.departureTime,
+        inventories: {
+          create: tripData.inventories.map((inv) => ({
+            seatClass: inv.seatClass,
+            capacity: inv.capacity,
+            sold: inv.sold,
+          })),
+        },
       },
-    },
-  });
-
-  const tripA1_04 = await prisma.trip.create({
-    data: {
-      code: "A1",
-      origin: "Hà Nội",
-      destination: "Đà Nẵng",
-      departureDate: "2027-02-04",
-      departureTime: "06:00",
-      inventories: {
-        create: [
-          { seatClass: "Ghế ngồi mềm", capacity: 50, sold: 50 }, // Sold out
-          { seatClass: "Giường nằm khoang 4", capacity: 28, sold: 28 }, // Sold out
-          { seatClass: "Giường nằm khoang 6", capacity: 42, sold: 42 }, // Sold out
-        ],
+      include: {
+        inventories: true,
       },
-    },
-  });
+    });
 
-  const tripA1_05 = await prisma.trip.create({
-    data: {
-      code: "A1",
-      origin: "Hà Nội",
-      destination: "Đà Nẵng",
-      departureDate: "2027-02-05",
-      departureTime: "06:00",
-      inventories: {
-        create: [
-          { seatClass: "Ghế ngồi mềm", capacity: 50, sold: 42 }, // 8 seats left
-          { seatClass: "Giường nằm khoang 4", capacity: 28, sold: 28 }, // Sold out
-          { seatClass: "Giường nằm khoang 6", capacity: 42, sold: 42 }, // Sold out
-        ],
-      },
-    },
-  });
+    const key = `${tripData.code}_${tripData.departureDate}`;
+    createdTripsMap.set(key, createdTrip);
+  }
 
-  // B2: Hà Nội - Vinh
-  const tripB2_05 = await prisma.trip.create({
-    data: {
-      code: "B2",
-      origin: "Hà Nội",
-      destination: "Vinh",
-      departureDate: "2027-02-05",
-      departureTime: "14:30",
-      inventories: {
-        create: [
-          { seatClass: "Ghế ngồi mềm", capacity: 60, sold: 60 }, // Sold out
-          { seatClass: "Giường nằm khoang 4", capacity: 32, sold: 32 }, // Sold out
-          { seatClass: "Giường nằm khoang 6", capacity: 48, sold: 48 }, // Sold out
-        ],
-      },
-    },
-  });
+  console.log(`-> Đã nạp thành công ${createdTripsMap.size} chuyến tàu thật kèm SeatInventory vào cơ sở dữ liệu.`);
 
-  const tripB2_06 = await prisma.trip.create({
-    data: {
-      code: "B2",
-      origin: "Hà Nội",
-      destination: "Vinh",
-      departureDate: "2027-02-06",
-      departureTime: "14:30",
-      inventories: {
-        create: [
-          { seatClass: "Ghế ngồi mềm", capacity: 60, sold: 45 },
-          { seatClass: "Giường nằm khoang 4", capacity: 32, sold: 25 },
-          { seatClass: "Giường nằm khoang 6", capacity: 48, sold: 40 },
-        ],
-      },
-    },
-  });
+  // 4. Tìm các chuyến trọng điểm phục vụ kịch bản chờ vé & KPI
+  // SE31: Hà Nội - Đà Nẵng ngày 2026-11-04 (Chuyến chính có nhu cầu cao nhất)
+  const tripSE31_04 = createdTripsMap.get("SE31_2026-11-04");
+  const tripSE11_05 = createdTripsMap.get("SE11_2026-11-05");
+  const tripSE12_05 = createdTripsMap.get("SE12_2026-11-05");
 
-  // C3: Sài Gòn - Nha Trang
-  const tripC3_05 = await prisma.trip.create({
-    data: {
-      code: "C3",
-      origin: "Sài Gòn",
-      destination: "Nha Trang",
-      departureDate: "2027-02-05",
-      departureTime: "20:00",
-      inventories: {
-        create: [
-          { seatClass: "Ghế ngồi mềm", capacity: 50, sold: 50 }, // Sold out
-          { seatClass: "Giường nằm khoang 4", capacity: 28, sold: 28 }, // Sold out
-          { seatClass: "Giường nằm khoang 6", capacity: 42, sold: 42 }, // Sold out
-        ],
-      },
-    },
-  });
+  if (!tripSE31_04 || !tripSE11_05 || !tripSE12_05) {
+    throw new Error("Không tìm thấy các chuyến SE31, SE11, SE12 trong dataset CSV.");
+  }
 
-  console.log("-> Đã tạo 6 chuyến tàu mẫu kèm kho chỗ SeatInventory");
-
-  // 4. Tạo các yêu cầu chờ (YC-001 đến YC-008)
-  // YC-001: A1 04/02 2 vé "Lệch ±1 ngày" Đang chờ (khach1)
+  // 5. Tạo các yêu cầu chờ mẫu (YC-001 đến YC-008) gắn với các chuyến tàu thật
+  // YC-001: SE31 04/11 2 vé "Lệch ±1 ngày" Đang chờ (khach1)
   await prisma.waitRequest.create({
     data: {
       code: "YC-001",
       userId: passenger1.id,
-      tripId: tripA1_04.id,
+      tripId: tripSE31_04.id,
       seatClass: "Ghế ngồi mềm",
       tickets: 2,
       acceptDateShift: true,
@@ -239,12 +241,12 @@ async function main() {
     },
   });
 
-  // YC-002: A1 04/02 1 vé không thay thế Có vé phù hợp (khach2)
+  // YC-002: SE31 04/11 1 vé không thay thế Có vé phù hợp (khach2)
   const req2 = await prisma.waitRequest.create({
     data: {
       code: "YC-002",
       userId: passenger2.id,
-      tripId: tripA1_04.id,
+      tripId: tripSE31_04.id,
       seatClass: "Ghế ngồi mềm",
       tickets: 1,
       acceptDateShift: false,
@@ -252,9 +254,9 @@ async function main() {
       acceptOtherClass: false,
       channel: "EMAIL",
       status: "Có vé phù hợp",
-      suggestedTripId: tripA1_04.id,
+      suggestedTripId: tripSE31_04.id,
       suggestedSeatClass: "Ghế ngồi mềm",
-      staffNote: "Hệ thống ghi nhận có 01 vé trả của chuyến A1 ngày 04/02/2027.",
+      staffNote: "Hệ thống ghi nhận có 01 vé trả của chuyến SE31 ngày 04/11/2026.",
       notifiedAt: new Date("2026-10-26T09:30:00Z"),
       createdAt: new Date("2026-10-25T08:15:00Z"),
       statusChangedAt: new Date("2026-10-26T09:30:00Z"),
@@ -269,18 +271,18 @@ async function main() {
       channel: "EMAIL",
       simulated: true,
       message:
-        "Đã có vé phù hợp cho yêu cầu YC-002: Chuyến A1 (Hà Nội - Đà Nẵng) ngày 04/02/2027, loại chỗ Ghế ngồi mềm. Vui lòng truy cập kênh bán vé chính thức để đặt chỗ.",
+        "Đã có vé phù hợp cho yêu cầu YC-002: Chuyến SE31 (Hà Nội - Đà Nẵng) ngày 04/11/2026, loại chỗ Ghế ngồi mềm. Vui lòng truy cập kênh bán vé chính thức để đặt chỗ.",
       createdAt: new Date("2026-10-26T09:30:00Z"),
       readAt: new Date("2026-10-26T09:45:00Z"), // Đã đọc sau 15 phút
     },
   });
 
-  // YC-003: B2 05/02 3 vé "Chuyến khác cùng tuyến" Đã hủy (khach3)
+  // YC-003: SE11 05/11 3 vé "Chuyến khác cùng tuyến" Đã hủy (khach3)
   await prisma.waitRequest.create({
     data: {
       code: "YC-003",
       userId: passenger3.id,
-      tripId: tripB2_05.id,
+      tripId: tripSE11_05.id,
       seatClass: "Ghế ngồi mềm",
       tickets: 3,
       acceptDateShift: false,
@@ -295,12 +297,12 @@ async function main() {
     },
   });
 
-  // YC-004: A1 04/02 4 vé "Lệch ±1 ngày" Đang chờ (khach4)
+  // YC-004: SE31 04/11 4 vé "Lệch ±1 ngày" Đang chờ (khach4)
   await prisma.waitRequest.create({
     data: {
       code: "YC-004",
       userId: passenger4.id,
-      tripId: tripA1_04.id,
+      tripId: tripSE31_04.id,
       seatClass: "Ghế ngồi mềm",
       tickets: 4,
       acceptDateShift: true,
@@ -313,12 +315,12 @@ async function main() {
     },
   });
 
-  // YC-005: A1 04/02 2 vé "Loại chỗ khác" Đang chờ (khach5)
+  // YC-005: SE31 04/11 2 vé "Loại chỗ khác" Đang chờ (khach5)
   await prisma.waitRequest.create({
     data: {
       code: "YC-005",
       userId: passenger5.id,
-      tripId: tripA1_04.id,
+      tripId: tripSE31_04.id,
       seatClass: "Ghế ngồi mềm",
       tickets: 2,
       acceptDateShift: false,
@@ -331,12 +333,12 @@ async function main() {
     },
   });
 
-  // YC-006: C3 05/02 1 vé không thay thế Đang chờ (khach1)
+  // YC-006: SE12 05/11 1 vé không thay thế Đang chờ (khach1)
   await prisma.waitRequest.create({
     data: {
       code: "YC-006",
       userId: passenger1.id,
-      tripId: tripC3_05.id,
+      tripId: tripSE12_05.id,
       seatClass: "Ghế ngồi mềm",
       tickets: 1,
       acceptDateShift: false,
@@ -349,12 +351,12 @@ async function main() {
     },
   });
 
-  // YC-007: A1 04/02 2 vé "Chuyến khác cùng tuyến" Đang chờ (khach2)
+  // YC-007: SE31 04/11 2 vé "Chuyến khác cùng tuyến" Đang chờ (khach2)
   await prisma.waitRequest.create({
     data: {
       code: "YC-007",
       userId: passenger2.id,
-      tripId: tripA1_04.id,
+      tripId: tripSE31_04.id,
       seatClass: "Ghế ngồi mềm",
       tickets: 2,
       acceptDateShift: false,
@@ -367,12 +369,12 @@ async function main() {
     },
   });
 
-  // YC-008: B2 05/02 2 vé "Lệch ±1 ngày" Đang chờ (khach3)
+  // YC-008: SE11 05/11 2 vé "Lệch ±1 ngày" Đang chờ (khach3)
   await prisma.waitRequest.create({
     data: {
       code: "YC-008",
       userId: passenger3.id,
-      tripId: tripB2_05.id,
+      tripId: tripSE11_05.id,
       seatClass: "Ghế ngồi mềm",
       tickets: 2,
       acceptDateShift: true,
@@ -385,10 +387,9 @@ async function main() {
     },
   });
 
-  console.log("-> Đã tạo 8 yêu cầu chờ mẫu (YC-001 đến YC-008)");
+  console.log("-> Đã tạo 8 yêu cầu chờ thực tế (YC-001 đến YC-008)");
 
-  // 5. Ghi nhật ký phân tích (AnalyticsEvent) & AuditLog ban đầu
-  // 10 lượt mở form, 8 lượt tạo thành công
+  // 6. Ghi nhật ký phân tích (AnalyticsEvent) & AuditLog ban đầu
   for (let i = 0; i < 10; i++) {
     const hour = String(7 + (i % 4)).padStart(2, "0");
     const minute = String(10 + i * 3).padStart(2, "0");
@@ -417,7 +418,7 @@ async function main() {
       action: "INIT_SEED",
       entity: "SYSTEM",
       entityId: "system",
-      after: JSON.stringify({ message: "Khởi tạo dữ liệu mẫu ban đầu" }),
+      after: JSON.stringify({ message: "Khởi tạo dữ liệu từ trips_dataset.csv thành công" }),
     },
   });
 
@@ -430,13 +431,13 @@ async function main() {
       before: JSON.stringify({ status: "Đang chờ" }),
       after: JSON.stringify({
         status: "Có vé phù hợp",
-        suggestedTrip: "A1",
+        suggestedTrip: "SE31",
         suggestedSeatClass: "Ghế ngồi mềm",
       }),
     },
   });
 
-  console.log("--- Khởi tạo dữ liệu mẫu THÀNH CÔNG! ---");
+  console.log("--- Khởi tạo toàn bộ dữ liệu thật THÀNH CÔNG! ---");
 }
 
 main()

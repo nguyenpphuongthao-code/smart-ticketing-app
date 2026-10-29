@@ -104,7 +104,7 @@ export default async function HomePage() {
                 <input
                   type="date"
                   name="date"
-                  defaultValue="2027-02-04"
+                  defaultValue="2026-11-04"
                   className="w-full px-3 py-2 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                 />
               </div>

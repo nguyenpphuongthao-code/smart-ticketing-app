@@ -31,7 +31,7 @@ describe("ACCEPTANCE TEST (End-to-End Workflow Verification)", () => {
     });
 
     tripA1_04 = await prisma.trip.findFirst({
-      where: { code: "A1", departureDate: "2027-02-04" },
+      where: { code: "SE31", departureDate: "2026-11-04" },
       include: { inventories: true },
     });
 
@@ -49,8 +49,8 @@ describe("ACCEPTANCE TEST (End-to-End Workflow Verification)", () => {
     await prisma.$disconnect();
   });
 
-  it("Step 1: khach1 registers a waitlist for A1 Hà Nội–Đà Nẵng 04/02/2027, 1 ticket", async () => {
-    // Verify seat class is sold out for A1 04/02
+  it("Step 1: khach1 registers a waitlist for SE31 Hà Nội–Đà Nẵng 04/11/2026, 1 ticket", async () => {
+    // Verify seat class is sold out for SE31 04/11
     const inventory = tripA1_04.inventories.find((i: any) => i.seatClass === "Ghế ngồi mềm");
     expect(inventory.capacity - inventory.sold).toBeLessThanOrEqual(0);
 
@@ -103,7 +103,7 @@ describe("ACCEPTANCE TEST (End-to-End Workflow Verification)", () => {
     expect(staffViewRequest).not.toBeNull();
     expect(staffViewRequest?.user.email).toBe("khach1@demo.local");
     expect(staffViewRequest?.status).toBe("Đang chờ");
-    expect(staffViewRequest?.trip.code).toBe("A1");
+    expect(staffViewRequest?.trip.code).toBe("SE31");
   });
 
   it("Step 3: Staff sets it to 'Có vé phù hợp' with suggested trip", async () => {
@@ -128,7 +128,7 @@ describe("ACCEPTANCE TEST (End-to-End Workflow Verification)", () => {
         requestId: updated.id,
         channel: "WEBSITE",
         simulated: true,
-        message: `Đã có vé phù hợp cho yêu cầu ${updated.code}: Chuyến A1 ngày 04/02/2027.`,
+        message: `Đã có vé phù hợp cho yêu cầu ${updated.code}: Chuyến SE31 ngày 04/11/2026.`,
       },
     });
 

@@ -1,0 +1,122 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model User {
+  id             String         @id @default(cuid())
+  name           String
+  email          String         @unique
+  passwordHash   String
+  phone          String?
+  role           String         @default("PASSENGER") // "PASSENGER" | "STAFF"
+  defaultChannel String         @default("WEBSITE")   // "WEBSITE" | "SMS" | "EMAIL"
+  createdAt      DateTime       @default(now())
+
+  waitRequests   WaitRequest[]
+  notifications  Notification[]
+  auditLogs      AuditLog[]
+  analyticsEvents AnalyticsEvent[]
+}
+
+model Trip {
+  id             String          @id @default(cuid())
+  code           String          // A1, B2, C3, etc.
+  origin         String
+  destination    String
+  departureDate  String          // YYYY-MM-DD
+  departureTime  String          // HH:mm
+
+  inventories    SeatInventory[]
+  waitRequests   WaitRequest[]   @relation("PrimaryTrip")
+  suggestedIn    WaitRequest[]   @relation("SuggestedTrip")
+
+  @@index([origin, destination, departureDate])
+}
+
+model SeatInventory {
+  id        String @id @default(cuid())
+  tripId    String
+  seatClass String // "Ghế ngồi mềm", "Giường nằm khoang 4", "Giường nằm khoang 6"
+  capacity  Int
+  sold      Int
+
+  trip      Trip   @relation(fields: [tripId], references: [id], onDelete: Cascade)
+
+  @@unique([tripId, seatClass])
+}
+
+model WaitRequest {
+  id                 String    @id @default(cuid())
+  code               String    @unique // YC-001, YC-002, etc.
+  userId             String
+  tripId             String
+  seatClass          String
+  tickets            Int       // 1 - 6
+  acceptDateShift    Boolean   @default(false)
+  acceptOtherTrip    Boolean   @default(false)
+  acceptOtherClass   Boolean   @default(false)
+  channel            String    @default("WEBSITE") // "WEBSITE" | "SMS" | "EMAIL"
+  status             String    @default("Đang chờ") // "Đang chờ" | "Có vé phù hợp" | "Đã hủy"
+
+  suggestedTripId    String?
+  suggestedSeatClass String?
+  staffNote          String?
+  noticeWrong        Boolean   @default(false)
+
+  createdAt          DateTime  @default(now())
+  statusChangedAt    DateTime  @default(now())
+  notifiedAt         DateTime?
+  convertedAt        DateTime?
+  cancelledAt        DateTime?
+  cancelReason       String?
+  csat               Int?      // 1 - 5
+
+  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  trip               Trip      @relation("PrimaryTrip", fields: [tripId], references: [id])
+  suggestedTrip      Trip?     @relation("SuggestedTrip", fields: [suggestedTripId], references: [id])
+  notifications      Notification[]
+
+  @@index([status, tripId])
+  @@index([userId])
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  requestId String?
+  message   String
+  channel   String    @default("WEBSITE") // "WEBSITE" | "SMS" | "EMAIL"
+  simulated Boolean   @default(true)
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  request   WaitRequest? @relation(fields: [requestId], references: [id], onDelete: SetNull)
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  actorId   String
+  action    String
+  entity    String
+  entityId  String
+  before    String?  // JSON string
+  after     String?  // JSON string
+  createdAt DateTime @default(now())
+
+  actor     User     @relation(fields: [actorId], references: [id], onDelete: Cascade)
+}
+
+model AnalyticsEvent {
+  id        String   @id @default(cuid())
+  type      String   // "form_started" | "request_created"
+  userId    String?
+  createdAt DateTime @default(now())
+
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+}

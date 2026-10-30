@@ -74,18 +74,32 @@ export function CreateWaitRequestForm({
   // Find currently selected trip
   const currentTrip = trips.find((t) => t.id === selectedTripId);
 
+  // Chỉ lấy những loại chỗ thực sự tồn tại trên chuyến tàu
+  const availableClasses = currentTrip
+    ? SEAT_CLASSES.filter((sc) =>
+        currentTrip.inventories.some((inv) => inv.seatClass === sc)
+      )
+    : [];
+
   // Calculate available seats for chosen class
   const currentInventory = currentTrip?.inventories.find(
     (inv) => inv.seatClass === selectedSeatClass
   );
+
   const availableSeats = currentInventory
     ? currentInventory.capacity - currentInventory.sold
     : 0;
+
   const isTripAvailableForPurchase = availableSeats >= tickets;
+
+  // Chỉ cho phép đăng ký khi loại chỗ tồn tại
+  // và số chỗ còn lại không đủ đáp ứng nhu cầu
+  const canRegister =
+    !!currentInventory && !isTripAvailableForPurchase;
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (isTripAvailableForPurchase) return;
+    if (!canRegister) return;
 
     setError(null);
     setLoading(true);
@@ -168,7 +182,22 @@ export function CreateWaitRequestForm({
           </label>
           <select
             value={selectedTripId}
-            onChange={(e) => setSelectedTripId(e.target.value)}
+            onChange={(e) => {
+              const id = e.target.value;
+              setSelectedTripId(id);
+
+              const t = trips.find((x) => x.id === id);
+
+              const stillValid = t?.inventories.some(
+                (i) => i.seatClass === selectedSeatClass
+              );
+
+              // Nếu loại chỗ đang chọn không tồn tại trên chuyến mới,
+              // tự động chuyển sang loại chỗ đầu tiên của chuyến đó
+              if (!stillValid && t?.inventories[0]) {
+                setSelectedSeatClass(t.inventories[0].seatClass);
+              }
+            }}
             className="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 bg-white"
           >
             {trips.map((trip) => (
@@ -188,9 +217,10 @@ export function CreateWaitRequestForm({
             <select
               value={selectedSeatClass}
               onChange={(e) => setSelectedSeatClass(e.target.value)}
-              className="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 bg-white"
+              disabled={availableClasses.length === 0}
+              className="w-full px-3.5 py-2.5 text-sm border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 bg-white disabled:bg-slate-100"
             >
-              {SEAT_CLASSES.map((sc) => (
+              {availableClasses.map((sc) => (
                 <option key={sc} value={sc}>
                   {sc}
                 </option>
@@ -200,7 +230,7 @@ export function CreateWaitRequestForm({
 
           <div>
             <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-              3. Số lượng vé (1 - 6 vé)
+              3. Số lượng vé (Tối đa 6 vé)
             </label>
             <div className="flex items-center border border-slate-300 rounded-xl px-2 py-1 bg-white">
               <button
@@ -227,7 +257,9 @@ export function CreateWaitRequestForm({
         </div>
 
         {/* Real-time Business Rule Warning Check */}
-        {isTripAvailableForPurchase ? (
+
+        {isTripAvailableForPurchase && currentInventory ? (
+          // Trường hợp 1: Còn đủ vé để mua trực tiếp
           <div className="p-4 bg-emerald-50 border border-emerald-300 rounded-xl flex items-start gap-3 text-xs text-emerald-800">
             <CheckCircle className="w-5 h-5 text-emerald-600 flex-shrink-0 mt-0.5" />
             <div>
@@ -235,16 +267,26 @@ export function CreateWaitRequestForm({
                 Chuyến này còn vé, bạn có thể đặt vé trên kênh bán vé chính thức.
               </p>
               <p className="mt-1 text-emerald-700">
-                Hiện còn <strong>{availableSeats} chỗ trống</strong> cho loại chỗ này (nhu cầu của
-                bạn: {tickets} vé). Bạn không cần đăng ký chờ.
+                Hiện còn <strong>{availableSeats} chỗ trống</strong> cho loại chỗ này
+                (nhu cầu của bạn: {tickets} vé). Bạn không cần đăng ký chờ.
               </p>
             </div>
           </div>
+        ) : !currentInventory ? (
+          // Trường hợp 2: Không có dữ liệu loại chỗ
+          <div className="p-3 bg-red-50 border border-red-200 rounded-xl flex items-center gap-2 text-xs text-red-700">
+            <AlertCircle className="w-4 h-4 flex-shrink-0" />
+            <span>
+              Chuyến này không có loại chỗ đã chọn. Vui lòng chọn chuyến tàu hoặc loại chỗ khác.
+            </span>
+          </div>
         ) : (
+          // Trường hợp 3: Có loại chỗ nhưng không đủ vé
           <div className="p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-center gap-2 text-xs text-amber-800">
             <AlertCircle className="w-4 h-4 text-amber-600 flex-shrink-0" />
             <span>
-              Chuyến tàu đã hết đủ {tickets} chỗ cho loại chỗ này. Đủ điều kiện đăng ký chờ vé.
+              Chuyến tàu không còn đủ {tickets} chỗ cho loại chỗ này.
+              Bạn có thể đăng ký chờ vé.
             </span>
           </div>
         )}
@@ -332,7 +374,7 @@ export function CreateWaitRequestForm({
         <div>
           <button
             type="submit"
-            disabled={loading || isTripAvailableForPurchase}
+            disabled={loading || !canRegister}
             className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm rounded-xl shadow-sm flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition"
           >
             {loading ? "Đang gửi đăng ký..." : "Xác nhận gửi yêu cầu chờ vé"}

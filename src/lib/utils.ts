@@ -37,7 +37,7 @@ export function getStatusBadgeClasses(status: string) {
     case REQUEST_STATUS.MATCHED:
       return "bg-emerald-50 text-emerald-800 border-emerald-300";
     case REQUEST_STATUS.CANCELLED:
-      return "bg-slate-100 text-slate-600 border-slate-300";
+      return "bg-red-50 text-red-800 border-red-300";
     default:
       return "bg-slate-100 text-slate-700 border-slate-200";
   }

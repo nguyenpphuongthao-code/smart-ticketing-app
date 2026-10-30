@@ -21,28 +21,27 @@ export default async function TimChuyenPage({ searchParams }: TimChuyenProps) {
   const date = searchParams.date || "";
 
   // Build filter query
+  const today = new Date().toLocaleDateString("sv-SE", {
+      timeZone: "Asia/Ho_Chi_Minh",
+  });
+
   const whereClause: any = {};
   if (origin) {
-    whereClause.origin = { contains: origin };
+      whereClause.origin = { contains: origin };
   }
   if (destination) {
-    whereClause.destination = { contains: destination };
+      whereClause.destination = { contains: destination };
   }
-  if (date) {
-    whereClause.departureDate = date;
-  }
+
+  // Chỉ lấy chuyến chưa khởi hành
+  whereClause.departureDate = date
+      ? { equals: date, gte: today }
+      : { gte: today };
 
   const trips = await prisma.trip.findMany({
     where: whereClause,
     include: {
       inventories: true,
-      _count: {
-        select: {
-          waitRequests: {
-            where: { status: "Đang chờ" },
-          },
-        },
-      },
     },
     orderBy: [{ departureDate: "asc" }, { departureTime: "asc" }],
   });
@@ -149,8 +148,6 @@ export default async function TimChuyenPage({ searchParams }: TimChuyenProps) {
       ) : (
         <div className="space-y-4">
           {trips.map((trip) => {
-            const hasSoldOut = trip.inventories.some((inv) => inv.capacity - inv.sold <= 0);
-            const allSoldOut = trip.inventories.every((inv) => inv.capacity - inv.sold <= 0);
 
             return (
               <div
@@ -180,14 +177,6 @@ export default async function TimChuyenPage({ searchParams }: TimChuyenProps) {
                   </div>
 
                   <div className="flex items-center gap-2">
-                    {hasSoldOut && (
-                      <Link
-                        href={`/cho-ve/moi?tripId=${trip.id}`}
-                        className="px-3.5 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-xs font-semibold shadow-sm transition"
-                      >
-                        Đăng ký chờ vé
-                      </Link>
-                    )}
                     <Link
                       href={`/chuyen/${trip.id}`}
                       className="px-3.5 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 rounded-lg text-xs font-semibold flex items-center gap-1 transition"
@@ -219,11 +208,19 @@ export default async function TimChuyenPage({ searchParams }: TimChuyenProps) {
                           </div>
                         </div>
 
-                        <div>
+                        <div className="flex flex-col items-end gap-1.5">
                           {isSoldOut ? (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-rose-100 text-rose-700">
-                              Hết vé
-                            </span>
+                            <>
+                              <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-rose-100 text-rose-700">
+                                Hết vé
+                              </span>
+                                <Link
+                                  href={`/cho-ve/moi?tripId=${trip.id}&seatClass=${encodeURIComponent(inv.seatClass)}`}
+                                  className="text-[11px] font-semibold text-amber-700 hover:underline"
+                                >
+                                  Đăng ký chờ →
+                                </Link>
+                            </>
                           ) : (
                             <span className="inline-flex items-center px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-100 text-emerald-700">
                               Còn vé ({available})
@@ -234,16 +231,6 @@ export default async function TimChuyenPage({ searchParams }: TimChuyenProps) {
                     );
                   })}
                 </div>
-
-                {/* Waiting requests summary */}
-                {trip._count.waitRequests > 0 && (
-                  <div className="mt-3 pt-3 border-t border-slate-100 flex items-center gap-1.5 text-xs text-amber-700">
-                    <span className="w-2 h-2 rounded-full bg-amber-500"></span>
-                    <span>
-                      Đang có <strong>{trip._count.waitRequests}</strong> yêu cầu chờ cho chuyến này
-                    </span>
-                  </div>
-                )}
               </div>
             );
           })}

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/db";
 import { requireUser, clearSessionCookie } from "@/lib/auth";
 import { REQUEST_STATUS } from "@/lib/constants";
+import { expireDepartedRequests } from "@/lib/expire";
 import {
   createWaitRequestSchema,
   cancelRequestSchema,
@@ -34,6 +35,8 @@ export async function logFormStartedAction() {
 
 export async function createWaitRequestAction(formData: FormData) {
   const user = await requireUser();
+
+  await expireDepartedRequests(user.id);
 
   const tripId = formData.get("tripId") as string;
   const seatClass = formData.get("seatClass") as string;
@@ -90,7 +93,10 @@ export async function createWaitRequestAction(formData: FormData) {
   const activeUserRequests = await prisma.waitRequest.findMany({
     where: {
       userId: user.id,
-      status: { in: [REQUEST_STATUS.PENDING, REQUEST_STATUS.MATCHED] },
+      OR: [
+        { status: REQUEST_STATUS.PENDING },
+        { status: REQUEST_STATUS.MATCHED, convertedAt: null },
+      ],
     },
   });
 

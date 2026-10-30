@@ -30,10 +30,6 @@ export default async function ChuyenDetailPage({ params }: ChuyenDetailProps) {
     where: { id: params.id },
     include: {
       inventories: true,
-      waitRequests: {
-        where: { status: "Đang chờ" },
-        select: { id: true, tickets: true, seatClass: true },
-      },
     },
   });
 
@@ -41,7 +37,8 @@ export default async function ChuyenDetailPage({ params }: ChuyenDetailProps) {
     notFound();
   }
 
-  const totalWaitingTickets = trip.waitRequests.reduce((sum, r) => sum + r.tickets, 0);
+  const today = new Date().toLocaleDateString("sv-SE", { timeZone: "Asia/Ho_Chi_Minh" });
+  const isPast = trip.departureDate < today;
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
@@ -80,16 +77,14 @@ export default async function ChuyenDetailPage({ params }: ChuyenDetailProps) {
           </div>
         </div>
 
-        {/* Aggregate Unmet Demand for this trip */}
-        {totalWaitingTickets > 0 && (
-          <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-xl flex items-center gap-2 text-xs text-amber-800">
-            <AlertTriangle className="w-4 h-4 text-amber-600 flex-shrink-0" />
-            <span>
-              Chuyến này hiện có <strong>{trip.waitRequests.length}</strong> yêu cầu chờ với tổng cộng{" "}
-              <strong>{totalWaitingTickets}</strong> vé chưa được đáp ứng.
-            </span>
-          </div>
-        )}
+       {isPast && (
+         <div className="mt-4 p-3 bg-slate-100 border border-slate-200 rounded-xl flex items-center gap-2 text-xs text-slate-600">
+           <AlertTriangle className="w-4 h-4 text-slate-500 flex-shrink-0" />
+           <span>
+             Chuyến tàu này đã khởi hành, không thể đăng ký chờ hoặc đặt vé.
+           </span>
+         </div>
+       )}
       </div>
 
       {/* Seat Inventories & Booking / Waitlist Options */}
@@ -102,9 +97,6 @@ export default async function ChuyenDetailPage({ params }: ChuyenDetailProps) {
           {trip.inventories.map((inv) => {
             const available = inv.capacity - inv.sold;
             const isSoldOut = available <= 0;
-            const waitingForClass = trip.waitRequests
-              .filter((r) => r.seatClass === inv.seatClass)
-              .reduce((sum, r) => sum + r.tickets, 0);
 
             // Construct waitlist URL
             const waitlistUrl = `/cho-ve/moi?tripId=${trip.id}&seatClass=${encodeURIComponent(
@@ -135,49 +127,53 @@ export default async function ChuyenDetailPage({ params }: ChuyenDetailProps) {
                   <div className="text-xs text-slate-500">
                     Sức chứa: {inv.capacity} chỗ • Đã bán: {inv.sold} chỗ
                   </div>
-                  {waitingForClass > 0 && (
-                    <div className="text-[11px] text-amber-700 font-medium">
-                      Đang có {waitingForClass} vé chờ ở loại chỗ này
-                    </div>
-                  )}
                 </div>
 
-                <div>
-                  {isSoldOut ? (
-                    <div className="space-y-1.5 text-right">
-                      {user ? (
-                        <Link
-                          href={waitlistUrl}
-                          className="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white font-semibold text-xs rounded-lg shadow-sm transition"
-                        >
-                          Đăng ký chờ vé cho loại chỗ này
-                        </Link>
-                      ) : (
-                        <Link
-                          href={loginWaitlistUrl}
-                          className="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white font-semibold text-xs rounded-lg shadow-sm transition"
-                        >
-                          Đăng nhập để đăng ký chờ
-                        </Link>
-                      )}
-                      <p className="text-[11px] text-slate-400 text-center sm:text-right">
-                        Chuyến đã hết chỗ, không thể mua trực tiếp
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="space-y-1 text-right">
-                      <button
-                        type="button"
-                        disabled
-                        className="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 bg-emerald-600 text-white font-semibold text-xs rounded-lg opacity-80 cursor-not-allowed"
-                        title="Đây là sản phẩm học thuật, không bán vé thật."
+              <div>
+                {isPast ? null : isSoldOut ? (
+                  <div className="space-y-1.5 text-right">
+                    {user ? (
+                      <Link
+                        href={waitlistUrl}
+                        className="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white font-semibold text-xs rounded-lg shadow-sm transition"
                       >
-                        Đặt vé trên kênh chính thức (giả lập)
-                      </button>
-                      <p className="text-[11px] text-slate-400 text-center sm:text-right">
-                        Chuyến còn vé, vui lòng mua trên hệ thống thật
-                      </p>
-                    </div>
+                        Đăng ký chờ vé cho loại chỗ này
+                      </Link>
+                    ) : (
+                      <Link
+                        href={loginWaitlistUrl}
+                        className="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white font-semibold text-xs rounded-lg shadow-sm transition"
+                      >
+                        Đăng nhập để đăng ký chờ
+                      </Link>
+                    )}
+                    <p className="text-[11px] text-slate-400 text-center sm:text-right">
+                      Chuyến đã hết chỗ, không thể mua trực tiếp
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-1 text-right">
+                    <a
+                      href="https://dsvn.vn/#/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs rounded-lg shadow-sm transition"
+                      title="Mở website chính thức của Đường sắt Việt Nam"
+                    >
+                      Đặt vé trên kênh chính thức
+                    </a>
+                    <p className="text-[11px] text-slate-400 text-center sm:text-right">
+                      Chuyến còn vé, vui lòng mua trên hệ thống thật
+                    </p>
+                    {available < 6 && (
+                      <Link
+                        href={user ? waitlistUrl : loginWaitlistUrl}
+                        className="block text-[11px] text-amber-700 hover:underline text-center sm:text-right"
+                      >
+                        Cần nhiều hơn {available} vé? Đăng ký chờ
+                      </Link>
+                    )}
+                  </div>
                   )}
                 </div>
               </div>

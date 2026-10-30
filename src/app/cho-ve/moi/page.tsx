@@ -24,8 +24,17 @@ export default async function ChoVeMoiPage({ searchParams }: Props) {
     redirect(redirectUrl);
   }
 
-  // Fetch all trips with inventories
+  // Chỉ lấy các chuyến tàu chưa khởi hành
+  const today = new Date().toLocaleDateString("sv-SE", {
+    timeZone: "Asia/Ho_Chi_Minh",
+  });
+
   const trips = await prisma.trip.findMany({
+    where: {
+      departureDate: {
+        gte: today,
+      },
+    },
     include: {
       inventories: true,
     },
@@ -44,12 +53,18 @@ export default async function ChoVeMoiPage({ searchParams }: Props) {
         </p>
       </div>
 
-      <CreateWaitRequestForm
-        user={user}
-        trips={trips}
-        initialTripId={searchParams.tripId}
-        initialSeatClass={searchParams.seatClass}
-      />
+      {trips.length === 0 ? (
+        <div className="bg-white border border-slate-200 rounded-2xl p-8 text-center text-sm text-slate-600">
+          Hiện chưa có chuyến tàu nào sắp khởi hành để đăng ký chờ.
+        </div>
+      ) : (
+        <CreateWaitRequestForm
+          user={user}
+          trips={trips}
+          initialTripId={searchParams.tripId}
+          initialSeatClass={searchParams.seatClass}
+        />
+      )}
     </div>
   );
 }

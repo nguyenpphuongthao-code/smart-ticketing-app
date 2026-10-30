@@ -14,26 +14,10 @@ import {
   Calendar,
   MapPin,
 } from "lucide-react";
-import { prisma } from "@/lib/db";
 import { STATIONS } from "@/lib/stations";
 
-export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  // Query live counters from database
-  let waitingRequestsCount = 0;
-  let waitingTicketsCount = 0;
-
-  try {
-    const pendingList = await prisma.waitRequest.findMany({
-      where: { status: "Đang chờ" },
-      select: { tickets: true },
-    });
-    waitingRequestsCount = pendingList.length;
-    waitingTicketsCount = pendingList.reduce((acc, curr) => acc + curr.tickets, 0);
-  } catch (error) {
-    console.error("Lỗi truy vấn số liệu chờ:", error);
-  }
 
   return (
     <div className="flex-1 flex flex-col">
@@ -119,26 +103,6 @@ export default async function HomePage() {
                 </button>
               </div>
             </form>
-          </div>
-
-          {/* Live Counter Badge */}
-          <div className="pt-4 flex flex-wrap items-center justify-center gap-6 text-sm text-slate-300">
-            <div className="flex items-center gap-2">
-              <span className="w-3 h-3 rounded-full bg-amber-400 animate-pulse"></span>
-              <span>
-                Hiện có{" "}
-                <strong className="text-amber-300 text-base">{waitingRequestsCount}</strong> yêu
-                cầu đang chờ
-              </span>
-            </div>
-            <div className="text-slate-500">•</div>
-            <div>
-              <span>
-                Tổng cộng{" "}
-                <strong className="text-amber-300 text-base">{waitingTicketsCount}</strong> vé đang
-                chờ được giải quyết
-              </span>
-            </div>
           </div>
         </div>
       </section>

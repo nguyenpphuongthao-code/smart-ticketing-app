@@ -15,6 +15,7 @@ import {
 import { getSession } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { REQUEST_STATUS, type RequestStatus } from "@/lib/constants";
+import { expireDepartedRequests } from "@/lib/expire";
 import { formatDateVN, formatDateTimeVN, getStatusBadgeClasses } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -32,9 +33,25 @@ export default async function YeuCauListPage({ searchParams }: Props) {
     redirect("/dang-nhap?redirectTo=/yeu-cau");
   }
 
+  await expireDepartedRequests(user.id);
+
   const statusFilter = searchParams.status || "ALL";
   const searchQuery = (searchParams.q || "").trim();
 
+  const activeCount = await prisma.waitRequest.count({
+    where: {
+      userId: user.id,
+      OR: [
+        { status: REQUEST_STATUS.PENDING },
+        { status: REQUEST_STATUS.MATCHED, convertedAt: null },
+      ],
+    },
+  });
+
+  const reachedLimit = activeCount >= 5;
+  const today = new Date().toLocaleDateString("sv-SE", {
+    timeZone: "Asia/Ho_Chi_Minh",
+  });
   const whereClause: any = {
     userId: user.id,
   };
@@ -70,13 +87,26 @@ export default async function YeuCauListPage({ searchParams }: Props) {
           </p>
         </div>
 
-        <Link
-          href="/cho-ve/moi"
-          className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold shadow-sm transition"
-        >
-          <PlusCircle className="w-4 h-4" />
-          Đăng ký chờ vé mới
-        </Link>
+       <div className="flex flex-col items-end gap-2">
+         <span className="text-xs text-slate-500">
+           Yêu cầu đang hoạt động: <strong>{activeCount}/5</strong>
+         </span>
+
+         {reachedLimit ? (
+           <span className="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 text-slate-500 rounded-xl text-xs font-semibold cursor-not-allowed">
+             <PlusCircle className="w-4 h-4" />
+             Đã đạt giới hạn 5 yêu cầu
+           </span>
+         ) : (
+           <Link
+             href="/cho-ve/moi"
+             className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold shadow-sm transition"
+           >
+             <PlusCircle className="w-4 h-4" />
+             Đăng ký chờ vé mới
+           </Link>
+         )}
+       </div>
       </div>
 
       {/* Filters & Search Bar */}
@@ -211,6 +241,16 @@ export default async function YeuCauListPage({ searchParams }: Props) {
                       )}
                     </div>
                   </div>
+                   {req.status === REQUEST_STATUS.MATCHED && req.suggestedTrip && (
+                     <div className="mt-2 text-xs text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-lg px-2.5 py-1.5">
+                       <strong>Chuyến tàu được gợi ý:</strong>{" "}
+                       Tàu {req.suggestedTrip.code} •{" "}
+                       {formatDateVN(req.suggestedTrip.departureDate)}
+                       <div className="mt-1">
+                         Vui lòng xem chi tiết yêu cầu để thực hiện bước xác nhận đặt vé.
+                       </div>
+                     </div>
+                   )}
 
                   <Link
                     href={`/yeu-cau/${req.code}`}

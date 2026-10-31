@@ -37,6 +37,11 @@ export function Footer() {
                 </Link>
               </li>
               <li>
+                <Link href="/gioi-thieu" className="hover:text-blue-400">
+                  Giới thiệu & Phạm vi đề tài
+                </Link>
+              </li>
+              <li>
                 <Link href="/tim-chuyen" className="hover:text-blue-400">
                   Tìm chuyến & Tồn chỗ
                 </Link>
@@ -44,11 +49,6 @@ export function Footer() {
               <li>
                 <Link href="/cho-ve/moi" className="hover:text-blue-400">
                   Đăng ký chờ vé
-                </Link>
-              </li>
-              <li>
-                <Link href="/gioi-thieu" className="hover:text-blue-400">
-                  Giới thiệu & Phạm vi đề tài
                 </Link>
               </li>
             </ul>

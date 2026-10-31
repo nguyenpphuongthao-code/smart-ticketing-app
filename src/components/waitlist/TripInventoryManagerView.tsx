@@ -397,7 +397,7 @@ export function TripInventoryManagerView({ trips, pendingRequests }: Props) {
           </div>
           <div className="flex items-center gap-2">
             <span className="text-xs font-semibold px-2.5 py-1 bg-slate-100 text-slate-700 rounded-lg">
-              {filteredTrips.length}/{trips.length} chuyến
+              {filteredTrips.length}/{trips.length} chuyến sắp khởi hành
             </span>
             {isFiltering && (
               <button

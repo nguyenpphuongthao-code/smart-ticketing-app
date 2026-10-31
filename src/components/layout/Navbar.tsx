@@ -87,15 +87,6 @@ export function Navbar({ user, unreadCount = 0 }: NavbarProps) {
                   Trang chủ
                 </Link>
                 <Link
-                  href="/tim-chuyen"
-                  className={`px-3 py-2 rounded-md text-sm font-medium ${isActive("/tim-chuyen")
-                      ? "text-blue-600 bg-blue-50 font-semibold"
-                      : "text-slate-700 hover:text-blue-600 hover:bg-slate-50"
-                    }`}
-                >
-                  Tìm chuyến
-                </Link>
-                <Link
                   href="/gioi-thieu"
                   className={`px-3 py-2 rounded-md text-sm font-medium ${isActive("/gioi-thieu")
                       ? "text-blue-600 bg-blue-50 font-semibold"
@@ -103,6 +94,15 @@ export function Navbar({ user, unreadCount = 0 }: NavbarProps) {
                     }`}
                 >
                   Giới thiệu
+                </Link>
+                <Link
+                  href="/tim-chuyen"
+                  className={`px-3 py-2 rounded-md text-sm font-medium ${isActive("/tim-chuyen")
+                      ? "text-blue-600 bg-blue-50 font-semibold"
+                      : "text-slate-700 hover:text-blue-600 hover:bg-slate-50"
+                    }`}
+                >
+                  Tìm chuyến
                 </Link>
 
                 {user && (
@@ -272,18 +272,18 @@ export function Navbar({ user, unreadCount = 0 }: NavbarProps) {
                 Trang chủ
               </Link>
               <Link
-                href="/tim-chuyen"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:bg-slate-100"
-              >
-                Tìm chuyến
-              </Link>
-              <Link
                 href="/gioi-thieu"
                 onClick={() => setMobileMenuOpen(false)}
                 className="block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:bg-slate-100"
               >
                 Giới thiệu
+              </Link>
+              <Link
+                href="/tim-chuyen"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:bg-slate-100"
+              >
+                Tìm chuyến
               </Link>
               <Link
                 href="/cho-ve/moi"
@@ -335,18 +335,18 @@ export function Navbar({ user, unreadCount = 0 }: NavbarProps) {
                 Trang chủ
               </Link>
               <Link
-                href="/tim-chuyen"
-                onClick={() => setMobileMenuOpen(false)}
-                className="block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:bg-slate-100"
-              >
-                Tìm chuyến
-              </Link>
-              <Link
                 href="/gioi-thieu"
                 onClick={() => setMobileMenuOpen(false)}
                 className="block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:bg-slate-100"
               >
                 Giới thiệu
+              </Link>
+              <Link
+                href="/tim-chuyen"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block px-3 py-2 rounded-md text-base font-medium text-slate-700 hover:bg-slate-100"
+              >
+                Tìm chuyến
               </Link>
               <div className="pt-2 border-t border-slate-200 space-y-2">
                 <a

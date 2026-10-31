@@ -40,7 +40,7 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/public ./public
-COPY --from=builder /app/data ./data
+COPY --from=builder /data ./data
 
 # Hỗ trợ cả port 10000 (Render) và 3000 (Local / VPS)
 EXPOSE 10000 3000

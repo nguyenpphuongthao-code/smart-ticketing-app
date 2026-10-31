@@ -16,14 +16,14 @@
     "name": "Khách Hàng Mới",
     "role": "PASSENGER",
     "createdAt": "2026-10-29T17:36:24.672Z",
-    "lastLoginAt": "2026-10-31T08:02:03.778Z"
+    "lastLoginAt": "2026-10-31T18:47:05.479Z"
   },
   {
     "email": "test_staff_new@demo.local",
     "name": "Nhân Viên Điều Hành Mới",
     "role": "STAFF",
     "createdAt": "2026-10-29T17:36:24.778Z",
-    "lastLoginAt": "2026-10-31T08:02:03.859Z"
+    "lastLoginAt": "2026-10-31T18:47:05.592Z"
   },
   {
     "email": "nguyenny@gmail.com",
@@ -37,5 +37,11 @@
     "name": "Nguyen Phung Phuong Thao",
     "role": "STAFF",
     "createdAt": "2026-10-29T18:22:00.981Z"
+  },
+  {
+    "email": "phthao9127@gmail.com",
+    "name": "Phương Thảo",
+    "role": "STAFF",
+    "createdAt": "2026-10-31T18:45:00.000Z"
   }
 ]

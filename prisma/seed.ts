@@ -20,14 +20,30 @@ interface CsvTripRow {
 async function main() {
   console.log("--- Bắt đầu nạp dữ liệu chuyến tàu thật từ data/trips_dataset.csv ---");
 
-  // 1. Dọn dẹp dữ liệu cũ (đảm bảo tính idempotent)
+  // 1. Dọn dẹp dữ liệu cũ (chỉ dọn dữ liệu demo, BẢO LƯU tài khoản người dùng đã tạo)
+  const demoEmails = [
+    "nhanvien@chovethongminh.vn",
+    "hanhkhach@chovethongminh.vn",
+    "nhanvien@demo.local",
+    "khach1@demo.local",
+    "khach2@demo.local",
+    "khach3@demo.local",
+    "khach4@demo.local",
+    "khach5@demo.local",
+  ];
+
   await prisma.notification.deleteMany({});
   await prisma.auditLog.deleteMany({});
   await prisma.analyticsEvent.deleteMany({});
   await prisma.waitRequest.deleteMany({});
   await prisma.seatInventory.deleteMany({});
   await prisma.trip.deleteMany({});
-  await prisma.user.deleteMany({});
+  // Chỉ xóa các user demo, tuyệt đối không xóa user do người dùng tự tạo
+  await prisma.user.deleteMany({
+    where: {
+      email: { in: demoEmails },
+    },
+  });
 
   // 2. Tạo tài khoản mẫu chính thức: 1 nhân viên, 1 khách hàng
   const staffOfficialHash = await bcrypt.hash("NhanVien@2027", 10);
@@ -126,10 +142,58 @@ async function main() {
 
   console.log("-> Đã tạo các tài khoản người dùng (STAFF và PASSENGER)");
 
+  // 2.1. Đảm bảo tất cả tài khoản trong allowed_accounts.json luôn tồn tại trong DB
+  try {
+    const allowedPathCandidates = [
+      path.join(process.cwd(), "data/allowed_accounts.json"),
+      path.join(__dirname, "../data/allowed_accounts.json"),
+      path.join(__dirname, "../../data/allowed_accounts.json"),
+      path.resolve("data/allowed_accounts.json"),
+      "/app/data/allowed_accounts.json",
+    ];
+    const allowedPath = allowedPathCandidates.find((p) => fs.existsSync(p));
+    if (allowedPath) {
+      const allowedAccounts = JSON.parse(fs.readFileSync(allowedPath, "utf-8"));
+      for (const acc of allowedAccounts) {
+        if (!acc.email || demoEmails.includes(acc.email)) continue;
+        const exists = await prisma.user.findUnique({
+          where: { email: acc.email.toLowerCase().trim() },
+        });
+        if (!exists) {
+          // Tạo tài khoản bảo lưu với mật khẩu:
+          // STAFF: NhanVien@2027 (hoặc Demo@12345) | PASSENGER: HanhKhach@2027 (hoặc Demo@12345)
+          const defaultHash = acc.role === "STAFF" ? staffOfficialHash : passengerOfficialHash;
+          await prisma.user.create({
+            data: {
+              email: acc.email.toLowerCase().trim(),
+              name: acc.name || acc.email.split("@")[0],
+              passwordHash: defaultHash,
+              role: acc.role === "STAFF" ? "STAFF" : "PASSENGER",
+              defaultChannel: "WEBSITE",
+            },
+          });
+          console.log(`-> Đã khôi phục/bảo lưu tài khoản: ${acc.email} (${acc.role})`);
+        }
+      }
+    }
+  } catch (err) {
+    console.error("Lỗi đồng bộ allowed_accounts.json trong seed:", err);
+  }
+
   // 3. Đọc dữ liệu thật từ data/trips_dataset.csv
-  const csvPath = path.join(process.cwd(), "data/trips_dataset.csv");
-  if (!fs.existsSync(csvPath)) {
-    throw new Error(`Không tìm thấy file dataset: ${csvPath}`);
+  const possiblePaths = [
+    path.join(process.cwd(), "data/trips_dataset.csv"),
+    path.join(__dirname, "../data/trips_dataset.csv"),
+    path.join(__dirname, "../../data/trips_dataset.csv"),
+    path.resolve("data/trips_dataset.csv"),
+    "/app/data/trips_dataset.csv",
+  ];
+
+  const csvPath = possiblePaths.find((p) => fs.existsSync(p));
+  if (!csvPath) {
+    throw new Error(
+      `Không tìm thấy file dataset: ${possiblePaths[0]}. Đã tìm qua: ${possiblePaths.join(", ")}`
+    );
   }
 
   const fileContent = fs.readFileSync(csvPath, "utf8");

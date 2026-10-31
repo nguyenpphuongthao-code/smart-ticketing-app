@@ -48,6 +48,7 @@ model SeatInventory {
   trip      Trip   @relation(fields: [tripId], references: [id], onDelete: Cascade)
 
   @@unique([tripId, seatClass])
+  vacancyRecordedAt DateTime?
 }
 
 model WaitRequest {

@@ -39,6 +39,7 @@ export async function updateSeatInventoryAction(inventoryId: string, formData: F
     data: {
       capacity: parsed.data.capacity,
       sold: parsed.data.sold,
+      vacancyRecordedAt: new Date(),
     },
   });
 
@@ -95,10 +96,14 @@ export async function recordTicketReturnAction(formData: FormData) {
   }
 
   const newSold = Math.max(0, inventory.sold - quantity);
+  const vacancyRecordedAt = new Date();
 
   await prisma.seatInventory.update({
     where: { id: inventory.id },
-    data: { sold: newSold },
+    data: {
+      sold: newSold,
+      vacancyRecordedAt,
+    },
   });
 
   // Write AuditLog
@@ -155,14 +160,16 @@ export async function confirmMatchingSuggestionAction(
   const departureDate = suggestedTrip?.departureDate || request.trip.departureDate;
 
   // Update status to "Có vé phù hợp"
+  const matchedAt = new Date();
+
   await prisma.waitRequest.update({
     where: { code: requestCode },
     data: {
       status: REQUEST_STATUS.MATCHED,
       suggestedTripId,
       suggestedSeatClass,
-      notifiedAt: new Date(),
-      statusChangedAt: new Date(),
+      notifiedAt: matchedAt,
+      statusChangedAt: matchedAt,
       staffNote: `Được ghép chỗ từ vé trả chuyến ${tripCode} ngày ${departureDate}.`,
     },
   });

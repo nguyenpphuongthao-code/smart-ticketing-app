@@ -15,6 +15,7 @@ import {
   PlusCircle,
 } from "lucide-react";
 import type { SessionUser } from "@/lib/auth";
+import { logoutAction } from "@/app/actions/auth";
 
 interface NavbarProps {
   user: SessionUser | null;
@@ -57,8 +58,8 @@ export function Navbar({ user, unreadCount = 0 }: NavbarProps) {
                 <Link
                   href="/gioi-thieu"
                   className={`px-3 py-2 rounded-md text-sm font-medium ${isActive("/gioi-thieu")
-                      ? "text-indigo-600 bg-indigo-50 font-bold"
-                      : "text-slate-700 hover:text-indigo-600 hover:bg-slate-50"
+                    ? "text-indigo-600 bg-indigo-50 font-bold"
+                    : "text-slate-700 hover:text-indigo-600 hover:bg-slate-50"
                     }`}
                 >
                   Giới thiệu
@@ -66,8 +67,8 @@ export function Navbar({ user, unreadCount = 0 }: NavbarProps) {
                 <Link
                   href="/quan-tri"
                   className={`px-3 py-2 rounded-md text-sm font-medium flex items-center gap-1.5 ${isActive("/quan-tri")
-                      ? "text-indigo-600 bg-indigo-50 font-bold"
-                      : "text-indigo-600 hover:bg-indigo-50"
+                    ? "text-indigo-600 bg-indigo-50 font-bold"
+                    : "text-indigo-600 hover:bg-indigo-50"
                     }`}
                 >
                   <ShieldAlert className="w-4 h-4 text-indigo-600" />
@@ -80,8 +81,8 @@ export function Navbar({ user, unreadCount = 0 }: NavbarProps) {
                 <Link
                   href="/"
                   className={`px-3 py-2 rounded-md text-sm font-medium ${isActive("/") && pathname === "/"
-                      ? "text-blue-600 bg-blue-50 font-semibold"
-                      : "text-slate-700 hover:text-blue-600 hover:bg-slate-50"
+                    ? "text-blue-600 bg-blue-50 font-semibold"
+                    : "text-slate-700 hover:text-blue-600 hover:bg-slate-50"
                     }`}
                 >
                   Trang chủ
@@ -89,8 +90,8 @@ export function Navbar({ user, unreadCount = 0 }: NavbarProps) {
                 <Link
                   href="/gioi-thieu"
                   className={`px-3 py-2 rounded-md text-sm font-medium ${isActive("/gioi-thieu")
-                      ? "text-blue-600 bg-blue-50 font-semibold"
-                      : "text-slate-700 hover:text-blue-600 hover:bg-slate-50"
+                    ? "text-blue-600 bg-blue-50 font-semibold"
+                    : "text-slate-700 hover:text-blue-600 hover:bg-slate-50"
                     }`}
                 >
                   Giới thiệu
@@ -98,8 +99,8 @@ export function Navbar({ user, unreadCount = 0 }: NavbarProps) {
                 <Link
                   href="/tim-chuyen"
                   className={`px-3 py-2 rounded-md text-sm font-medium ${isActive("/tim-chuyen")
-                      ? "text-blue-600 bg-blue-50 font-semibold"
-                      : "text-slate-700 hover:text-blue-600 hover:bg-slate-50"
+                    ? "text-blue-600 bg-blue-50 font-semibold"
+                    : "text-slate-700 hover:text-blue-600 hover:bg-slate-50"
                     }`}
                 >
                   Tìm chuyến
@@ -110,8 +111,8 @@ export function Navbar({ user, unreadCount = 0 }: NavbarProps) {
                     <Link
                       href="/cho-ve/moi"
                       className={`px-3 py-2 rounded-md text-sm font-medium flex items-center gap-1.5 ${isActive("/cho-ve/moi")
-                          ? "text-blue-600 bg-blue-50 font-semibold"
-                          : "text-slate-700 hover:text-blue-600 hover:bg-slate-50"
+                        ? "text-blue-600 bg-blue-50 font-semibold"
+                        : "text-slate-700 hover:text-blue-600 hover:bg-slate-50"
                         }`}
                     >
                       <PlusCircle className="w-4 h-4 text-blue-600" />
@@ -120,8 +121,8 @@ export function Navbar({ user, unreadCount = 0 }: NavbarProps) {
                     <Link
                       href="/yeu-cau"
                       className={`px-3 py-2 rounded-md text-sm font-medium flex items-center gap-1.5 ${isActive("/yeu-cau")
-                          ? "text-blue-600 bg-blue-50 font-semibold"
-                          : "text-slate-700 hover:text-blue-600 hover:bg-slate-50"
+                        ? "text-blue-600 bg-blue-50 font-semibold"
+                        : "text-slate-700 hover:text-blue-600 hover:bg-slate-50"
                         }`}
                     >
                       <ClipboardList className="w-4 h-4" />
@@ -169,11 +170,11 @@ export function Navbar({ user, unreadCount = 0 }: NavbarProps) {
                       </span>
                     )}
                   </Link>
-                  <form action="/api/auth/logout" method="POST">
+                  <form action={logoutAction}>
                     <button
                       type="submit"
                       className="p-2 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
-                      title="Đăng xuất"
+                      title="Thoát / Đăng xuất"
                     >
                       <LogOut className="w-4 h-4" />
                     </button>
@@ -251,12 +252,14 @@ export function Navbar({ user, unreadCount = 0 }: NavbarProps) {
                 Hồ sơ cá nhân ({user.name})
               </Link>
               <div className="pt-2 border-t border-slate-200">
-                <form action="/api/auth/logout" method="POST">
+                <form action={logoutAction}>
                   <button
                     type="submit"
-                    className="w-full text-left px-3 py-2 text-red-600 font-medium rounded-md hover:bg-red-50"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="w-full text-left px-3 py-2 text-red-600 font-medium rounded-md hover:bg-red-50 flex items-center gap-2"
                   >
-                    Đăng xuất ({user.email})
+                    <LogOut className="w-4 h-4" />
+                    Thoát / Đăng xuất ({user.email})
                   </button>
                 </form>
               </div>
@@ -314,12 +317,14 @@ export function Navbar({ user, unreadCount = 0 }: NavbarProps) {
                 Hồ sơ cá nhân ({user.name})
               </Link>
               <div className="pt-2 border-t border-slate-200">
-                <form action="/api/auth/logout" method="POST">
+                <form action={logoutAction}>
                   <button
                     type="submit"
-                    className="w-full text-left px-3 py-2 text-red-600 font-medium rounded-md hover:bg-red-50"
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="w-full text-left px-3 py-2 text-red-600 font-medium rounded-md hover:bg-red-50 flex items-center gap-2"
                   >
-                    Đăng xuất ({user.email})
+                    <LogOut className="w-4 h-4" />
+                    Thoát / Đăng xuất ({user.email})
                   </button>
                 </form>
               </div>

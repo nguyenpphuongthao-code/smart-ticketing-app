@@ -30,7 +30,7 @@ vi.mock("next/navigation", () => {
 // Import actions after mocking headers & navigation
 import { loginAction, quickLoginAction, registerAction } from "../app/actions/auth";
 import { requireStaff } from "../lib/auth";
-import { middleware } from "../middleware";
+import { middleware } from "../../middleware";
 
 const prisma = new PrismaClient();
 

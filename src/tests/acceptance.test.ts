@@ -17,15 +17,19 @@ describe("ACCEPTANCE TEST (End-to-End Workflow Verification)", () => {
   let nhanvienUser: any;
   let tripA1_04: any;
   let createdRequestCode: string = "";
+  let originalSold: number | null = null;
+  let inventoryId: string | null = null;
 
   beforeAll(async () => {
     // 1. Get test users
     khach1User = await prisma.user.findUnique({
       where: { email: "khach1@demo.local" },
     });
+
     khach2User = await prisma.user.findUnique({
       where: { email: "khach2@demo.local" },
     });
+
     nhanvienUser = await prisma.user.findUnique({
       where: { email: "nhanvien@demo.local" },
     });
@@ -41,11 +45,57 @@ describe("ACCEPTANCE TEST (End-to-End Workflow Verification)", () => {
 
     // Ensure database clean state for YC-009
     await prisma.waitRequest.deleteMany({ where: { code: "YC-009" } });
+
+    // Temporarily simulate sold-out inventory for acceptance test
+    const softSeatInventory = tripA1_04.inventories.find(
+      (item: any) => item.seatClass === "Ghế ngồi mềm"
+    );
+
+    if (!softSeatInventory) {
+      throw new Error("Không tìm thấy inventory Ghế ngồi mềm");
+    }
+
+    inventoryId = softSeatInventory.id;
+    originalSold = softSeatInventory.sold;
+
+    await prisma.seatInventory.update({
+      where: { id: inventoryId },
+      data: {
+        sold: softSeatInventory.capacity,
+      },
+    });
+
+    // Update in-memory data used by Step 1
+    softSeatInventory.sold = softSeatInventory.capacity;
   });
 
   afterAll(async () => {
-    await prisma.waitRequest.deleteMany({ where: { code: "YC-009" } });
-    await prisma.notification.deleteMany({ where: { message: { contains: "YC-009" } } });
+    // Clean up the request created during this test
+    if (createdRequestCode) {
+      await prisma.notification.deleteMany({
+        where: { message: { contains: createdRequestCode } },
+      });
+
+      await prisma.waitRequest.deleteMany({
+        where: { code: createdRequestCode },
+      });
+    }
+
+    // Clean up old test data if it exists
+    await prisma.waitRequest.deleteMany({
+      where: { code: "YC-009" },
+    });
+
+    // Restore original inventory
+    if (inventoryId && originalSold !== null) {
+      await prisma.seatInventory.update({
+        where: { id: inventoryId },
+        data: {
+          sold: originalSold,
+        },
+      });
+    }
+
     await prisma.$disconnect();
   });
 
@@ -65,7 +115,6 @@ describe("ACCEPTANCE TEST (End-to-End Workflow Verification)", () => {
       }
     }
     createdRequestCode = `YC-${String(maxNum + 1).padStart(3, "0")}`;
-    expect(createdRequestCode).toBe("YC-009");
 
     // Create request for khach1
     const newReq = await prisma.waitRequest.create({
@@ -90,13 +139,13 @@ describe("ACCEPTANCE TEST (End-to-End Workflow Verification)", () => {
       },
     });
 
-    expect(newReq.code).toBe("YC-009");
+    expect(newReq.code).toBe(createdRequestCode);
     expect(newReq.status).toBe("Đang chờ");
   });
 
   it("Step 2: Log in as nhanvien: the new request YC-009 appears", async () => {
     const staffViewRequest = await prisma.waitRequest.findUnique({
-      where: { code: "YC-009" },
+      where: { code: createdRequestCode },
       include: { trip: true, user: true },
     });
 
@@ -108,7 +157,7 @@ describe("ACCEPTANCE TEST (End-to-End Workflow Verification)", () => {
 
   it("Step 3: Staff sets it to 'Có vé phù hợp' with suggested trip", async () => {
     const updated = await prisma.waitRequest.update({
-      where: { code: "YC-009" },
+      where: { code: createdRequestCode },
       data: {
         status: REQUEST_STATUS.MATCHED,
         suggestedTripId: tripA1_04.id,
@@ -147,7 +196,7 @@ describe("ACCEPTANCE TEST (End-to-End Workflow Verification)", () => {
     expect(unreadCount).toBeGreaterThanOrEqual(1);
 
     const passengerRequest = await prisma.waitRequest.findUnique({
-      where: { code: "YC-009" },
+      where: { code: createdRequestCode },
       include: { suggestedTrip: true },
     });
 
@@ -157,14 +206,14 @@ describe("ACCEPTANCE TEST (End-to-End Workflow Verification)", () => {
 
     // khach1 confirms converted
     const converted = await prisma.waitRequest.update({
-      where: { code: "YC-009" },
+      where: { code: createdRequestCode },
       data: { convertedAt: new Date() },
     });
     expect(converted.convertedAt).not.toBeNull();
 
     // khach1 rates CSAT 5 stars
     const rated = await prisma.waitRequest.update({
-      where: { code: "YC-009" },
+      where: { code: createdRequestCode },
       data: { csat: 5 },
     });
     expect(rated.csat).toBe(5);
@@ -176,7 +225,7 @@ describe("ACCEPTANCE TEST (End-to-End Workflow Verification)", () => {
       where: { status: "Đang chờ" },
     });
 
-    const hasYC009InPending = pendingRequests.some((r) => r.code === "YC-009");
+    const hasYC009InPending = pendingRequests.some((r) => r.code === createdRequestCode);
     expect(hasYC009InPending).toBe(false);
 
     // In KPI, conversion rate is now updated

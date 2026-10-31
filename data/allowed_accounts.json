@@ -16,14 +16,14 @@
     "name": "Khách Hàng Mới",
     "role": "PASSENGER",
     "createdAt": "2026-10-29T17:36:24.672Z",
-    "lastLoginAt": "2026-10-29T17:38:33.731Z"
+    "lastLoginAt": "2026-10-31T08:02:03.778Z"
   },
   {
     "email": "test_staff_new@demo.local",
     "name": "Nhân Viên Điều Hành Mới",
     "role": "STAFF",
     "createdAt": "2026-10-29T17:36:24.778Z",
-    "lastLoginAt": "2026-10-29T17:38:33.834Z"
+    "lastLoginAt": "2026-10-31T08:02:03.859Z"
   },
   {
     "email": "nguyenny@gmail.com",

@@ -39,6 +39,17 @@ describe("Fresh Seed Verification & Business Rules", () => {
 
     // 2. Vé đang chờ = 13
     const waitingTickets = pendingRequests.reduce((sum, r) => sum + r.tickets, 0);
+    console.table(
+      pendingRequests.map((r) => ({
+        code: r.code,
+        tickets: r.tickets,
+        status: r.status,
+        trip: r.trip.code,
+        departureDate: r.trip.departureDate,
+      }))
+    );
+
+    console.log("Tổng số vé đang chờ:", waitingTickets);
     expect(waitingTickets).toBe(13);
 
     // 3. Có vé phù hợp = 1

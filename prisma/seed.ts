@@ -222,6 +222,15 @@ async function main() {
     throw new Error("Không tìm thấy các chuyến SE31, SE11, SE12 trong dataset CSV.");
   }
 
+  // Đảm bảo các chuyến có danh sách chờ thực tế (SE31, SE11, SE12) ở trạng thái hết vé (sold = capacity)
+  await prisma.seatInventory.updateMany({
+    where: {
+      tripId: { in: [tripSE31_04.id, tripSE11_05.id, tripSE12_05.id] },
+      seatClass: "Ghế ngồi mềm",
+    },
+    data: { sold: 50 },
+  });
+
   // 5. Tạo các yêu cầu chờ mẫu (YC-001 đến YC-008) gắn với các chuyến tàu thật
   // YC-001: SE31 04/11 2 vé "Lệch ±1 ngày" Đang chờ (khach1)
   await prisma.waitRequest.create({
